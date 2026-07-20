@@ -151,7 +151,7 @@
     </div>
 
     {{-- ===================== GRAFIK TREN ===================== --}}
-    <div class="card table-card mb-4">
+    <div class="card table-card mb-6">
         <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
             <span class="fw-semibold"><i class="bi bi-graph-up-arrow text-primary"></i> Grafik Tren BSTHP, Customer &amp; PIC Verifikator</span>
             <div class="btn-group btn-group-sm" role="group" id="chartPeriodToggle">
@@ -167,24 +167,111 @@
                 <div class="row g-4">
                     <div class="col-12 col-lg-4">
                         <h6 class="text-muted small text-uppercase mb-2">Jumlah BSTHP</h6>
-                        <div style="position: relative; height: 260px; display: block;">
+                        <div style="position: relative; height: 320px; display: block; padding-top: 8px;">
                             <canvas id="chartBsthp"></canvas>
                         </div>
                     </div>
                     <div class="col-12 col-lg-4">
                         <h6 class="text-muted small text-uppercase mb-2">Jumlah Customer</h6>
-                        <div style="position: relative; height: 260px; display: block;">
+                        <div style="position: relative; height: 320px; display: block; padding-top: 8px;">
                             <canvas id="chartCustomer"></canvas>
                         </div>
                     </div>
                     <div class="col-12 col-lg-4">
-                        <h6 class="text-muted small text-uppercase mb-2">PIC Verifikator</h6>
-                        <div style="position: relative; height: 260px; display: block;">
+                        <h6 class="text-muted small text-uppercase mb-2">Total Item Terverifikasi</h6>
+                        <div style="position: relative; height: 320px; display: block; padding-top: 8px;">
                             <canvas id="chartPic"></canvas>
                         </div>
                     </div>
+                                    </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- ===================== GRAFIK BSTHP PER PIC ===================== --}}
+    <div class="card table-card mb-4">
+        <div class="card-header bg-white fw-semibold">
+            <i class="bi bi-bar-chart-line-fill text-primary"></i> Grafik Jumlah BSTHP Berdasarkan PIC Verifikator
+        </div>
+        <div class="card-body">
+            @if (empty($picBsthpChartData['labels']))
+                <p class="text-muted mb-0">Belum ada data verifikasi PIC untuk ditampilkan.</p>
+            @else
+                <div style="position: relative; height: 360px; display: block; padding-top: 8px;">
+                    <canvas id="chartPicBsthp"></canvas>
                 </div>
             @endif
+        </div>
+    </div>
+
+    {{-- ===================== TOP 10 CUSTOMER & ITEM ===================== --}}
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-xl-6">
+            <div class="card table-card h-100">
+                <div class="card-header bg-white fw-semibold">
+                    <i class="bi bi-people-fill text-primary"></i> Top 10 Customer
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle">
+                        <thead class="sticky-th">
+                        <tr>
+                            <th>Customer</th>
+                            <th class="text-end">Jumlah BSTHP</th>
+                            <th class="text-end">Total Qty</th>
+                            <th class="text-end">Total Barcode</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @forelse ($topCustomers as $customer)
+                            <tr>
+                                <td>{{ $customer->customer }}</td>
+                                <td class="text-end">{{ number_format($customer->jumlah_bsthp) }}</td>
+                                <td class="text-end">{{ number_format((float) $customer->total_qty, 0, ',', '.') }}</td>
+                                <td class="text-end">{{ number_format($customer->total_barcode) }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Tidak ada data customer untuk filter ini.</td>
+                            </tr>
+                        @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-6">
+            <div class="card table-card h-100">
+                <div class="card-header bg-white fw-semibold">
+                    <i class="bi bi-box-seam text-success"></i> Top 10 Item
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle">
+                        <thead class="sticky-th">
+                        <tr>
+                            <th>Item</th>
+                            <th class="text-end">Jumlah BSTHP</th>
+                            <th class="text-end">Total Qty</th>
+                            <th class="text-end">Total Barcode</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @forelse ($topItems as $item)
+                            <tr>
+                                <td>{{ $item->code_item }}</td>
+                                <td class="text-end">{{ number_format($item->jumlah_bsthp) }}</td>
+                                <td class="text-end">{{ number_format((float) $item->total_qty, 0, ',', '.') }}</td>
+                                <td class="text-end">{{ number_format($item->total_barcode) }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Tidak ada data item untuk filter ini.</td>
+                            </tr>
+                        @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -265,8 +352,12 @@
 
 @section('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script>
+        Chart.register(ChartDataLabels);
+
         const chartData = @json($chartData);
+        const picBsthpChartData = @json($picBsthpChartData);
 
         const periodLabelFormatters = {
             day: (v) => v,
@@ -281,12 +372,51 @@
         const commonOptions = {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            plugins: {
+                legend: { display: false },
+                datalabels: { clip: false },
+            },
             scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
         };
 
         let currentPeriod = 'day';
-        let chartBsthp, chartCustomer, chartPic;
+        let chartBsthp, chartCustomer, chartPic, chartPicBsthp;
+
+        function buildPicBsthpChart() {
+            const ctx = document.getElementById('chartPicBsthp');
+            if (!ctx || !picBsthpChartData.labels?.length) return;
+
+            if (chartPicBsthp) chartPicBsthp.destroy();
+
+            chartPicBsthp = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: picBsthpChartData.labels,
+                    datasets: [{
+                        label: 'Jumlah BSTHP',
+                        data: picBsthpChartData.values,
+                        backgroundColor: '#0d6efd',
+                        borderRadius: 4,
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (value) => Number(value).toLocaleString('id-ID'),
+                        },
+                    }],
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: { legend: { display: false }, datalabels: { clip: false } },
+                    layout: { padding: { top: 16, bottom: 8 } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 },
+                        },
+                    },
+                },
+            });
+        }
 
         function buildCharts(period) {
             const d = chartData[period];
@@ -310,23 +440,41 @@
                         data: d.bsthp,
                         backgroundColor: '#0d6efd',
                         borderRadius: 4,
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (value) => Number(value).toLocaleString('id-ID'),
+                        },
                     }],
                 },
                 options: commonOptions,
             });
 
             chartCustomer = new Chart(ctxCustomer, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels,
                     datasets: [{
                         label: 'Jumlah Customer',
                         data: d.customer,
-                        backgroundColor: '#dc3545',
-                        borderRadius: 4,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.16)',
+                        borderWidth: 2,
+                        tension: 0.35,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        datalabels: {
+                            anchor: 'top',
+                            align: 'top',
+                            formatter: (value) => Number(value).toLocaleString('id-ID'),
+                        },
                     }],
                 },
-                options: commonOptions,
+                options: {
+                    ...commonOptions,
+                    layout: { padding: { top: 16, bottom: 8 } },
+                },
             });
 
             chartPic = new Chart(ctxPic, {
@@ -335,27 +483,38 @@
                     labels,
                     datasets: [
                         {
-                            type: 'bar',
-                            label: 'Item Diverifikasi',
-                            data: d.verified,
-                            backgroundColor: '#198754',
-                            borderRadius: 4,
-                            order: 2,
-                        },
-                        {
-                            type: 'line',
                             label: 'Jumlah PIC Aktif',
                             data: d.pic,
-                            borderColor: '#fd7e14',
                             backgroundColor: '#fd7e14',
-                            tension: 0.3,
+                            borderColor: '#c35a00',
+                            borderWidth: 1,
+                            borderRadius: 6,
                             order: 1,
+                        },
+                        {
+                            label: 'Item Diverifikasi',
+                            data: d.verified,
+                            borderColor: '#198754',
+                            backgroundColor: 'rgba(25, 135, 84, 0.16)',
+                            borderWidth: 2,
+                            tension: 0.35,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            fill: false,
+                            type: 'line',
+                            order: 2,
+                            datalabels: {
+                                anchor: 'top',
+                                align: 'top',
+                                formatter: (value) => Number(value).toLocaleString('id-ID'),
+                            },
                         },
                     ],
                 },
                 options: {
                     ...commonOptions,
-                    plugins: { legend: { display: true, position: 'bottom' } },
+                    plugins: { legend: { display: true, position: 'bottom' }, datalabels: { clip: false } },
+                    layout: { padding: { top: 16, bottom: 8 } },
                 },
             });
         }
@@ -371,6 +530,10 @@
 
         if (document.getElementById('chartBsthp')) {
             buildCharts(currentPeriod);
+        }
+
+        if (document.getElementById('chartPicBsthp')) {
+            buildPicBsthpChart();
         }
     </script>
 @endsection

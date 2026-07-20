@@ -63,6 +63,41 @@ class DashboardController extends Controller
 
         $totalVerified = $verifiedByPic->sum('jumlah');
 
+        // Breakdown jumlah BSTHP unik per PIC verifikator untuk grafik khusus.
+        $picBsthpChartData = $this->buildPicBsthpChartData($baseQuery);
+
+        // Top 10 customer berdasarkan jumlah BSTHP, total qty, dan total barcode.
+        $topCustomers = (clone $baseQuery)
+            ->whereNotNull('customer')
+            ->select(
+                'customer',
+                DB::raw('COUNT(DISTINCT bsthp_no) as jumlah_bsthp'),
+                DB::raw('COALESCE(SUM(qty), 0) as total_qty'),
+                DB::raw('COUNT(DISTINCT CASE WHEN label_barcode_no IS NOT NULL THEN label_barcode_no END) as total_barcode')
+            )
+            ->groupBy('customer')
+            ->orderByDesc('jumlah_bsthp')
+            ->orderByDesc('total_qty')
+            ->orderBy('customer')
+            ->limit(10)
+            ->get();
+
+        // Top 10 item berdasarkan jumlah BSTHP, total qty, dan total barcode.
+        $topItems = (clone $baseQuery)
+            ->whereNotNull('code_item')
+            ->select(
+                'code_item',
+                DB::raw('COUNT(DISTINCT bsthp_no) as jumlah_bsthp'),
+                DB::raw('COALESCE(SUM(qty), 0) as total_qty'),
+                DB::raw('COUNT(DISTINCT CASE WHEN label_barcode_no IS NOT NULL THEN label_barcode_no END) as total_barcode')
+            )
+            ->groupBy('code_item')
+            ->orderByDesc('jumlah_bsthp')
+            ->orderByDesc('total_qty')
+            ->orderBy('code_item')
+            ->limit(10)
+            ->get();
+
         // Daftar customer & PIC untuk dropdown filter (dari seluruh data, bukan hasil filter).
         $customerOptions = ReceivingGood::whereNotNull('customer')->distinct()->orderBy('customer')->pluck('customer');
         $picOptions = ReceivingGood::whereNotNull('verify_by')->distinct()->orderBy('verify_by')->pluck('verify_by');
@@ -103,6 +138,9 @@ class DashboardController extends Controller
             'totalQty' => $totalQty,
             'totalVerified' => $totalVerified,
             'verifiedByPic' => $verifiedByPic,
+            'picBsthpChartData' => $picBsthpChartData,
+            'topCustomers' => $topCustomers,
+            'topItems' => $topItems,
             'customerOptions' => $customerOptions,
             'picOptions' => $picOptions,
             'rows' => $rows,
@@ -110,6 +148,26 @@ class DashboardController extends Controller
             'hasData' => ReceivingGood::query()->exists(),
             'chartData' => $chartData,
         ]);
+    }
+
+    /**
+     * Hitung jumlah BSTHP unik yang dikirimkan per PIC verifikator.
+     */
+    protected function buildPicBsthpChartData($baseQuery): array
+    {
+        $result = (clone $baseQuery)
+            ->whereNotNull('verify_by')
+            ->whereNotNull('bsthp_no')
+            ->select('verify_by', DB::raw('COUNT(DISTINCT bsthp_no) as bsthp_count'))
+            ->groupBy('verify_by')
+            ->orderByDesc('bsthp_count')
+            ->orderBy('verify_by')
+            ->get();
+
+        return [
+            'labels' => $result->pluck('verify_by')->all(),
+            'values' => $result->pluck('bsthp_count')->map(fn ($v) => (int) $v)->all(),
+        ];
     }
 
     /**
