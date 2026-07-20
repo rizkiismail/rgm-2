@@ -1,0 +1,376 @@
+@extends('layout')
+
+@section('title', 'Dashboard - Monitoring Receiving Goods')
+
+@section('content')
+
+    @if (!$hasData)
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle-fill me-1"></i>
+            Belum ada data. Silakan <a href="{{ route('import.form') }}" class="alert-link">upload file export</a> terlebih dahulu.
+        </div>
+    @endif
+
+    {{-- ===================== FILTER ===================== --}}
+    <div class="card filter-card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ route('dashboard') }}" class="row g-3 align-items-end">
+                <div class="col-6 col-md-2">
+                    <label class="form-label small text-muted mb-1">Tanggal Dari</label>
+                    <input type="date" name="date_from" class="form-control"
+                           value="{{ $filters['date_from'] ?? ($dateFrom?->format('Y-m-d')) }}">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small text-muted mb-1">Tanggal Sampai</label>
+                    <input type="date" name="date_to" class="form-control"
+                           value="{{ $filters['date_to'] ?? ($dateTo?->format('Y-m-d')) }}">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small text-muted mb-1">Customer</label>
+                    <select name="customer" class="form-select">
+                        <option value="">Semua Customer</option>
+                        @foreach ($customerOptions as $c)
+                            <option value="{{ $c }}" @selected(($filters['customer'] ?? '') === $c)>{{ $c }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small text-muted mb-1">PIC Verifikator</label>
+                    <select name="pic" class="form-select">
+                        <option value="">Semua PIC</option>
+                        @foreach ($picOptions as $p)
+                            <option value="{{ $p }}" @selected(($filters['pic'] ?? '') === $p)>{{ $p }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small text-muted mb-1">Cari (Code Item / Part / BSTHP / Barcode)</label>
+                    <input type="text" name="q" class="form-control" placeholder="Ketik kata kunci..."
+                           value="{{ $filters['q'] ?? '' }}">
+                </div>
+                <div class="col-12 col-md-1 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel-fill"></i></button>
+                    <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary" title="Reset filter"><i class="bi bi-arrow-counterclockwise"></i></a>
+                </div>
+            </form>
+            @if ($boundsMin && $boundsMax)
+                <div class="small text-muted mt-2">
+                    <i class="bi bi-calendar-range"></i>
+                    Data tersedia dari <strong>{{ \Illuminate\Support\Carbon::parse($boundsMin)->translatedFormat('d M Y') }}</strong>
+                    sampai <strong>{{ \Illuminate\Support\Carbon::parse($boundsMax)->translatedFormat('d M Y') }}</strong>.
+                </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- ===================== SUMMARY CARDS ===================== --}}
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-2">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="text-muted small">Jumlah Data BSTHP</div>
+                            <div class="stat-value text-primary">{{ number_format($totalBsthp) }}</div>
+                        </div>
+                        <i class="bi bi-file-earmark-text-fill stat-icon text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="text-muted small">Item Diverifikasi PIC</div>
+                            <div class="stat-value text-success">{{ number_format($totalVerified) }}</div>
+                        </div>
+                        <i class="bi bi-patch-check-fill stat-icon text-success"></i>
+                    </div>
+                    <button class="btn btn-sm btn-link p-0 mt-1" type="button" data-bs-toggle="collapse" data-bs-target="#picBreakdown">
+                        Lihat rincian per PIC <i class="bi bi-chevron-down"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="text-muted small">Code Item (Unik)</div>
+                            <div class="stat-value text-warning">{{ number_format($totalCodeItem) }}</div>
+                        </div>
+                        <i class="bi bi-upc-scan stat-icon text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="text-muted small">Jumlah Barcode</div>
+                            <div class="stat-value text-info">{{ number_format($totalBarcode) }}</div>
+                        </div>
+                        <i class="bi bi-qr-code stat-icon text-info"></i>
+                    </div>
+                    <div class="small text-muted mt-1">Label Barcode No (unik)</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="text-muted small">Customer (Unik)</div>
+                            <div class="stat-value text-danger">{{ number_format($totalCustomer) }}</div>
+                        </div>
+                        <i class="bi bi-building-fill stat-icon text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="text-muted small">Total Qty</div>
+                            <div class="stat-value text-dark">{{ number_format($totalQty) }}</div>
+                        </div>
+                        <i class="bi bi-boxes stat-icon text-dark"></i>
+                    </div>
+                    <div class="small text-muted mt-1">{{ number_format($totalRows) }} baris data</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ===================== GRAFIK TREN ===================== --}}
+    <div class="card table-card mb-4">
+        <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span class="fw-semibold"><i class="bi bi-graph-up-arrow text-primary"></i> Grafik Tren BSTHP, Customer &amp; PIC Verifikator</span>
+            <div class="btn-group btn-group-sm" role="group" id="chartPeriodToggle">
+                <button type="button" class="btn btn-outline-primary active" data-period="day">Harian</button>
+                <button type="button" class="btn btn-outline-primary" data-period="month">Bulanan</button>
+                <button type="button" class="btn btn-outline-primary" data-period="year">Tahunan</button>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (empty($chartData['day']['labels']) && empty($chartData['month']['labels']))
+                <p class="text-muted mb-0">Belum ada data bertanggal untuk ditampilkan pada grafik.</p>
+            @else
+                <div class="row g-4">
+                    <div class="col-12 col-lg-4">
+                        <h6 class="text-muted small text-uppercase mb-2">Jumlah BSTHP</h6>
+                        <div style="position: relative; height: 260px; display: block;">
+                            <canvas id="chartBsthp"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-4">
+                        <h6 class="text-muted small text-uppercase mb-2">Jumlah Customer</h6>
+                        <div style="position: relative; height: 260px; display: block;">
+                            <canvas id="chartCustomer"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-4">
+                        <h6 class="text-muted small text-uppercase mb-2">PIC Verifikator</h6>
+                        <div style="position: relative; height: 260px; display: block;">
+                            <canvas id="chartPic"></canvas>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- ===================== PIC BREAKDOWN (collapsible) ===================== --}}
+    <div class="collapse mb-4" id="picBreakdown">
+        <div class="card table-card">
+            <div class="card-header bg-white fw-semibold">
+                <i class="bi bi-person-check-fill text-success"></i> Rincian Item Diverifikasi per PIC
+            </div>
+            <div class="card-body">
+                @if ($verifiedByPic->isEmpty())
+                    <p class="text-muted mb-0">Tidak ada data verifikasi pada rentang/filter ini.</p>
+                @else
+                    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-2">
+                        @foreach ($verifiedByPic as $pic)
+                            <div class="col">
+                                <div class="border rounded-3 p-2 d-flex justify-content-between align-items-center">
+                                    <span class="text-truncate" title="{{ $pic->verify_by }}">{{ $pic->verify_by }}</span>
+                                    <span class="badge bg-success badge-pic">{{ number_format($pic->jumlah) }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    {{-- ===================== DATA TABLE ===================== --}}
+    <div class="card table-card">
+        <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-table"></i> Detail Data ({{ number_format($rows->total()) }} baris sesuai filter)</span>
+        </div>
+        <div class="table-responsive" style="max-height: 65vh;">
+            <table class="table table-sm table-hover table-striped mb-0 align-middle">
+                <thead class="sticky-th">
+                <tr>
+                    <th>Tanggal Terima</th>
+                    <th>No. BSTHP</th>
+                    <th>PIC Verifikasi</th>
+                    <th>Code Item</th>
+                    <th>Part Name</th>
+                    <th>Model</th>
+                    <th class="text-end">Qty</th>
+                    <th>Unit</th>
+                    <th>Label Barcode</th>
+                    <th>Customer</th>
+                </tr>
+                </thead>
+                <tbody>
+                @forelse ($rows as $row)
+                    <tr>
+                        <td class="text-nowrap">{{ $row->date_income?->format('d-m-Y H:i') }}</td>
+                        <td class="text-nowrap">{{ $row->bsthp_no }}</td>
+                        <td>{{ $row->verify_by }}</td>
+                        <td>{{ $row->code_item }}</td>
+                        <td>{{ $row->part_name }}</td>
+                        <td>{{ $row->model }}</td>
+                        <td class="text-end">{{ number_format((float) $row->qty) }}</td>
+                        <td>{{ $row->unit }}</td>
+                        <td class="text-nowrap">{{ $row->label_barcode_no }}</td>
+                        <td>{{ $row->customer }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="10" class="text-center text-muted py-4">Tidak ada data untuk filter ini.</td>
+                    </tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white">
+            {{ $rows->links() }}
+        </div>
+    </div>
+
+@endsection
+
+@section('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        const chartData = @json($chartData);
+
+        const periodLabelFormatters = {
+            day: (v) => v,
+            month: (v) => v,
+            year: (v) => v,
+        };
+
+        function formatLabels(period, labels) {
+            return labels.map(periodLabelFormatters[period]);
+        }
+
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+        };
+
+        let currentPeriod = 'day';
+        let chartBsthp, chartCustomer, chartPic;
+
+        function buildCharts(period) {
+            const d = chartData[period];
+            const labels = formatLabels(period, d.labels);
+
+            if (chartBsthp) chartBsthp.destroy();
+            if (chartCustomer) chartCustomer.destroy();
+            if (chartPic) chartPic.destroy();
+
+            const ctxBsthp = document.getElementById('chartBsthp');
+            const ctxCustomer = document.getElementById('chartCustomer');
+            const ctxPic = document.getElementById('chartPic');
+            if (!ctxBsthp || !ctxCustomer || !ctxPic) return;
+
+            chartBsthp = new Chart(ctxBsthp, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Jumlah BSTHP',
+                        data: d.bsthp,
+                        backgroundColor: '#0d6efd',
+                        borderRadius: 4,
+                    }],
+                },
+                options: commonOptions,
+            });
+
+            chartCustomer = new Chart(ctxCustomer, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Jumlah Customer',
+                        data: d.customer,
+                        backgroundColor: '#dc3545',
+                        borderRadius: 4,
+                    }],
+                },
+                options: commonOptions,
+            });
+
+            chartPic = new Chart(ctxPic, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Item Diverifikasi',
+                            data: d.verified,
+                            backgroundColor: '#198754',
+                            borderRadius: 4,
+                            order: 2,
+                        },
+                        {
+                            type: 'line',
+                            label: 'Jumlah PIC Aktif',
+                            data: d.pic,
+                            borderColor: '#fd7e14',
+                            backgroundColor: '#fd7e14',
+                            tension: 0.3,
+                            order: 1,
+                        },
+                    ],
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: { legend: { display: true, position: 'bottom' } },
+                },
+            });
+        }
+
+        document.querySelectorAll('#chartPeriodToggle button').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#chartPeriodToggle button').forEach((b) => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentPeriod = btn.dataset.period;
+                buildCharts(currentPeriod);
+            });
+        });
+
+        if (document.getElementById('chartBsthp')) {
+            buildCharts(currentPeriod);
+        }
+    </script>
+@endsection
