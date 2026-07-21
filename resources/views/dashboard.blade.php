@@ -169,6 +169,31 @@
         </div>
     </div>
 
+    {{-- ===================== PIC BREAKDOWN (collapsible) ===================== --}}
+    <div class="collapse mb-4" id="picBreakdown">
+        <div class="card table-card">
+            <div class="card-header bg-white fw-semibold">
+                <i class="bi bi-person-check-fill text-success"></i> Rincian Item Diverifikasi per PIC
+            </div>
+            <div class="card-body">
+                @if ($verifiedByPic->isEmpty())
+                    <p class="text-muted mb-0">Tidak ada data verifikasi pada rentang/filter ini.</p>
+                @else
+                    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-2">
+                        @foreach ($verifiedByPic as $pic)
+                            <div class="col">
+                                <div class="border rounded-3 p-2 d-flex justify-content-between align-items-center">
+                                    <span class="text-truncate" title="{{ $pic->verify_by }}">{{ $pic->verify_by }}</span>
+                                    <span class="badge bg-success badge-pic">{{ number_format($pic->jumlah) }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
     {{-- ===================== GRAFIK TREN ===================== --}}
     <div class="card table-card mb-6" id="section-trends">
         <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -350,31 +375,6 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- ===================== PIC BREAKDOWN (collapsible) ===================== --}}
-    <div class="collapse mb-4" id="picBreakdown">
-        <div class="card table-card">
-            <div class="card-header bg-white fw-semibold">
-                <i class="bi bi-person-check-fill text-success"></i> Rincian Item Diverifikasi per PIC
-            </div>
-            <div class="card-body">
-                @if ($verifiedByPic->isEmpty())
-                    <p class="text-muted mb-0">Tidak ada data verifikasi pada rentang/filter ini.</p>
-                @else
-                    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-2">
-                        @foreach ($verifiedByPic as $pic)
-                            <div class="col">
-                                <div class="border rounded-3 p-2 d-flex justify-content-between align-items-center">
-                                    <span class="text-truncate" title="{{ $pic->verify_by }}">{{ $pic->verify_by }}</span>
-                                    <span class="badge bg-success badge-pic">{{ number_format($pic->jumlah) }}</span>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
             </div>
         </div>
     </div>

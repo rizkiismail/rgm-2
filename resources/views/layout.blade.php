@@ -37,6 +37,34 @@
         .section-nav { position: sticky; top: calc(var(--navbar-h) + var(--filter-h)); z-index: 1020; }
         .section-nav .nav-link:hover { color: #fff !important; }
         [id^="section-"] { scroll-margin-top: calc(var(--navbar-h) + var(--filter-h) + 70px); }
+
+        /* ---- Back to top button ---- */
+        #backToTop {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #212529;
+            color: #fff;
+            border: none;
+            box-shadow: 0 4px 14px rgba(0,0,0,.25);
+            font-size: 1.2rem;
+            z-index: 1040;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(12px);
+            transition: opacity .25s ease, transform .25s ease, background-color .2s ease, visibility .25s;
+        }
+        #backToTop.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        #backToTop:hover { background-color: #000; color: #fff; }
+        @media (max-width: 576px) {
+            #backToTop { right: 16px; bottom: 16px; width: 42px; height: 42px; font-size: 1.05rem; }
+        }
     </style>
 </head>
 <body>
@@ -80,6 +108,10 @@
     </div>
 </footer>
 
+<button type="button" id="backToTop" title="Kembali ke atas" aria-label="Kembali ke atas">
+    <i class="bi bi-arrow-up"></i>
+</button>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Keep the sticky navbar / sticky filter / section-nav stacked correctly,
@@ -102,9 +134,23 @@
             navbar.classList.toggle('is-scrolled', window.scrollY > 4);
         }
 
+        function toggleBackToTop() {
+            var btn = document.getElementById('backToTop');
+            if (!btn) return;
+            btn.classList.toggle('show', window.scrollY > 300);
+        }
+
+        var backToTopBtn = document.getElementById('backToTop');
+        if (backToTopBtn) {
+            backToTopBtn.addEventListener('click', function () {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
         window.addEventListener('load', updateStickyOffsets);
         window.addEventListener('resize', updateStickyOffsets);
         window.addEventListener('scroll', toggleNavbarShadow, { passive: true });
+        window.addEventListener('scroll', toggleBackToTop, { passive: true });
         document.addEventListener('DOMContentLoaded', updateStickyOffsets);
 
         // Filter height can also change after fonts/images finish loading.
