@@ -11,7 +11,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Tidak ada seeder default. Gunakan halaman "Upload Data" di web
-        // atau perintah `php artisan import:receiving-goods {path}` untuk mengisi data.
+        // Data master Customer & Line (dari file DB20Customer_tanpa_duplikat.xlsx).
+        $this->call(CustomerLineSeeder::class);
+
+        // Tidak ada seeder default untuk data transaksi. Gunakan halaman "Upload Data"
+        // di web atau perintah `php artisan import:receiving-goods {path}` untuk mengisinya.
     }
 }

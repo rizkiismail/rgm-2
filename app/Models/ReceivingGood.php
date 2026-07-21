@@ -33,4 +33,12 @@ class ReceivingGood extends Model
         'bsthp_date' => 'datetime',
         'qty' => 'decimal:2',
     ];
+
+    /**
+     * Data master customer (nama & line) yang cocok dengan kolom `customer` di sini.
+     */
+    public function customerLine()
+    {
+        return $this->belongsTo(Customer::class, 'customer', 'name');
+    }
 }

@@ -16,6 +16,11 @@
         .filter-card { border: none; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
         thead.sticky-th th { position: sticky; top: 0; background: #212529; color: #fff; z-index: 1; }
         .badge-pic { font-size: .8rem; }
+        /* Fix: <canvas> is inline by default, leaving a few px of baseline
+           whitespace below it. Chart.js's resize-observer then sees the parent
+           "grow", resizes the chart again, and the loop repeats forever unless
+           the canvas is forced to display:block. */
+        .chart-box canvas { display: block; width: 100% !important; height: 100% !important; }
     </style>
 </head>
 <body>
@@ -52,6 +57,12 @@
 
     @yield('content')
 </div>
+
+<footer class="footer py-3 bg-light border-top">
+    <div class="container-fluid px-4">
+        <div class="text-center small text-muted">© 2026 Rizki Andriana Ismail</div>
+    </div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 @yield('scripts')

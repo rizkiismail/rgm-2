@@ -12,10 +12,17 @@ Fitur:
   - **Jumlah Barcode** (Label Barcode No, unik)
   - **Customer unik**
   - Total Qty & jumlah baris data
-- Tabel detail data dengan pencarian & pagination.
+- Tabel detail data dengan pencarian & pagination, termasuk kolom **Line**
+  (jalur produksi) tiap customer.
+- Filter tambahan berdasarkan **Line** (1–17), memakai tabel master
+  `customers` (nama customer ⇄ nomor Line).
 - **Grafik tren** (Harian / Bulanan / Tahunan) untuk jumlah BSTHP, jumlah
   Customer, dan PIC Verifikator (item diverifikasi + jumlah PIC aktif),
-  otomatis mengikuti filter tanggal/customer/PIC yang sedang dipakai.
+  otomatis mengikuti filter tanggal/customer/PIC/Line yang sedang dipakai.
+- **Grafik Jumlah BSTHP Berdasarkan PIC Verifikator** (bar chart) beserta
+  **pie chart proporsi per PIC** di sampingnya.
+- **Top 10 Customer** (dengan kolom Line) dan **Top 10 Item** berdasarkan
+  jumlah BSTHP, total qty, dan total barcode.
 - **Upload data** langsung dari halaman web (tidak perlu convert file manual) —
   cukup upload file export `.xls` (yang sebenarnya berformat HTML, sama seperti
   contoh yang Anda berikan) tiap kali ada data baru.
@@ -72,9 +79,33 @@ Fitur:
    php artisan migrate
    ```
 
+7. **Isi data master Customer & Line** (nama customer ⇄ nomor Line, dari file
+   `DB20Customer_tanpa_duplikat.xlsx`):
+   ```
+   php artisan db:seed --class=CustomerLineSeeder
+   ```
+   Perintah ini aman dijalankan berulang kali (tidak akan menggandakan data).
+
 ---
 
-## 3. Menjalankan Aplikasi
+## 3. Update dari Versi Sebelumnya (Sudah Ada Data)
+
+Jika Anda sudah menjalankan aplikasi ini sebelumnya dan sudah punya data,
+cukup jalankan 2 perintah berikut setelah menarik/menyalin kode terbaru:
+
+```
+php artisan migrate
+php artisan db:seed --class=CustomerLineSeeder
+```
+
+- `migrate` akan membuat tabel `customers` baru **dan** merapikan spasi ganda
+  pada nama customer di data lama (mis. `"ROKI  INDONESIA, PT."` menjadi
+  `"ROKI INDONESIA, PT."`) supaya cocok dengan tabel Line.
+- `db:seed --class=CustomerLineSeeder` mengisi 117 pasangan Customer & Line.
+
+---
+
+## 4. Menjalankan Aplikasi
 
 Cara paling mudah (tidak perlu setting Virtual Host Apache):
 
@@ -90,7 +121,7 @@ Apache (atau buat Virtual Host baru) ke folder **`public/`** di dalam project in
 
 ---
 
-## 4. Mengisi Data
+## 5. Mengisi Data
 
 Buka menu **"Upload Data"** di navbar, lalu upload file export dari sistem
 (format `.xls` yang sebenarnya berupa HTML — sama seperti file yang Anda kirim).
@@ -110,7 +141,7 @@ Tambahkan `--replace` di akhir perintah untuk mengganti semua data lama.
 
 ---
 
-## 5. Struktur Data yang Terbaca
+## 6. Struktur Data yang Terbaca
 
 Importer membaca tabel `<tbody id="resultData">` pada file export dengan kolom:
 No, Tanggal Terima, Tanggal BSTHP, No. BSTHP, Verify No, Verify By (PIC),
@@ -119,9 +150,20 @@ Label Barcode No, Customer — persis seperti pada file `Receiving_Goods_Monitor
 yang Anda berikan. Jika format export dari sistem sumber berubah struktur
 kolomnya, sesuaikan urutan kolom di `app/Services/ReceivingGoodsImporter.php`.
 
+Kolom Customer dicocokkan (case-sensitive, tanpa spasi ganda) dengan tabel
+master `customers` (nama & Line) yang di-seed dari `CustomerLineSeeder`. Jika
+ada customer baru yang belum punya Line, tambahkan lewat phpMyAdmin pada
+tabel `customers`, atau edit `database/seeders/CustomerLineSeeder.php` lalu
+jalankan ulang `php artisan db:seed --class=CustomerLineSeeder`.
+
 ---
 
-## 6. Troubleshooting
+## 7. Troubleshooting
+
+- **Kolom Line kosong / tanda "-" di tabel**: pastikan sudah menjalankan
+  `php artisan db:seed --class=CustomerLineSeeder`, dan nama customer di data
+  transaksi persis sama dengan nama di tabel `customers` (jalankan ulang
+  `php artisan migrate` untuk merapikan spasi ganda pada data lama).
 
 - **Error "could not find driver"**: aktifkan extension `pdo_mysql` di
   `php.ini` (baris `extension=pdo_mysql` dihapus tanda `;` di depannya), lalu
