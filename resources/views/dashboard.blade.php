@@ -12,7 +12,7 @@
     @endif
 
     {{-- ===================== FILTER ===================== --}}
-    <div class="card filter-card mb-4">
+    <div class="card filter-card sticky-filter mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('dashboard') }}" class="row g-3 align-items-end">
                 <div class="col-6 col-md-2">
@@ -74,7 +74,7 @@
         </div>
     </div>
 
-    <nav class="nav nav-pills flex-nowrap overflow-auto gap-2 mb-4 bg-white p-2 rounded-3 shadow-sm sticky-top section-nav">
+    <nav class="nav nav-pills flex-nowrap overflow-auto gap-2 mb-4 bg-white p-2 rounded-3 shadow-sm section-nav">
         <a class="nav-link btn btn-sm btn-outline-primary" href="#section-trends">Tren BSTHP Customer &amp; PIC Verifikator</a>
         <a class="nav-link btn btn-sm btn-outline-primary" href="#section-pic-bsthp">Jumlah BSTHP Berdasarkan PIC Verifikator</a>
         <a class="nav-link btn btn-sm btn-outline-primary" href="#section-customer-line">Customer Berdasarkan Line</a>

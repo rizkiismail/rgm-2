@@ -22,13 +22,25 @@
            "grow", resizes the chart again, and the loop repeats forever unless
            the canvas is forced to display:block. */
         .chart-box canvas { display: block; width: 100% !important; height: 100% !important; }
-        .section-nav { position: sticky; top: 0; z-index: 1020; }
+
+        /* ---- Sticky navbar + sticky filter, stacked on top of each other ---- */
+        :root { --navbar-h: 62px; --filter-h: 0px; }
+        .app-navbar { position: sticky; top: 0; z-index: 1035; transition: box-shadow .2s ease; }
+        .app-navbar.is-scrolled { box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+        .filter-card.sticky-filter {
+            position: sticky;
+            top: var(--navbar-h);
+            z-index: 1030;
+            background-color: #f4f6f9; /* matches body bg so content behind never bleeds through */
+        }
+        .filter-card.sticky-filter .card-body { background-color: #fff; border-radius: 14px; }
+        .section-nav { position: sticky; top: calc(var(--navbar-h) + var(--filter-h)); z-index: 1020; }
         .section-nav .nav-link:hover { color: #fff !important; }
-        [id^="section-"] { scroll-margin-top: 60px; }
+        [id^="section-"] { scroll-margin-top: calc(var(--navbar-h) + var(--filter-h) + 70px); }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 app-navbar">
     <div class="container-fluid px-4">
         <a class="navbar-brand" href="{{ route('dashboard') }}">
             <i class="bi bi-box-seam-fill me-1"></i> Monitoring Receiving Goods
@@ -69,6 +81,41 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Keep the sticky navbar / sticky filter / section-nav stacked correctly,
+    // since their real heights can change (responsive wrapping, filter validation
+    // messages, etc). We measure the actual DOM and feed it into CSS variables
+    // instead of hardcoding pixel offsets.
+    (function () {
+        function updateStickyOffsets() {
+            var navbar = document.querySelector('.app-navbar');
+            var filter = document.querySelector('.filter-card');
+            var navH = navbar ? navbar.offsetHeight : 0;
+            var filterH = filter ? filter.offsetHeight : 0;
+            document.documentElement.style.setProperty('--navbar-h', navH + 'px');
+            document.documentElement.style.setProperty('--filter-h', filterH + 'px');
+        }
+
+        function toggleNavbarShadow() {
+            var navbar = document.querySelector('.app-navbar');
+            if (!navbar) return;
+            navbar.classList.toggle('is-scrolled', window.scrollY > 4);
+        }
+
+        window.addEventListener('load', updateStickyOffsets);
+        window.addEventListener('resize', updateStickyOffsets);
+        window.addEventListener('scroll', toggleNavbarShadow, { passive: true });
+        document.addEventListener('DOMContentLoaded', updateStickyOffsets);
+
+        // Filter height can also change after fonts/images finish loading.
+        if (window.ResizeObserver) {
+            var filterEl = document.querySelector('.filter-card');
+            if (filterEl) {
+                new ResizeObserver(updateStickyOffsets).observe(filterEl);
+            }
+        }
+    })();
+</script>
 @yield('scripts')
 </body>
 </html>
