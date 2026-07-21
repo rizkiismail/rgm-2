@@ -268,7 +268,7 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-people-fill text-primary"></i> Top 10 Customer
                 </div>
-                <div class="table-responsive" style="height: 370px; overflow-x: auto; overflow-y: auto; display: block;">
+                <div class="table-responsive" style="height: 385px; overflow-x: auto; overflow-y: auto; display: block;">
                     <table class="table table-sm table-hover table-striped mb-0 align-middle">
                         <thead class="sticky-th">
                         <tr>
@@ -312,11 +312,12 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-box-seam text-success"></i> Top 10 Item
                 </div>
-                <div class="table-responsive" style="height: 370px; overflow-x: auto; overflow-y: auto; display: block;">
+                <div class="table-responsive" style="height: 385px; overflow-x: auto; overflow-y: auto; display: block;">
                     <table class="table table-sm table-hover table-striped mb-0 align-middle">
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
+                            <th>Customer</th>
                             <th>Item</th>
                             <th class="text-end">Jumlah BSTHP</th>
                             <th class="text-end">Total Qty</th>
@@ -327,6 +328,7 @@
                         @forelse ($topItems as $item)
                             <tr>
                                 <td class="text-center">{{ $loop->iteration }}</td>
+                                <td>{{ $item->customer ?? '-' }}</td>
                                 <td>{{ $item->code_item }}</td>
                                 <td class="text-end">{{ number_format($item->jumlah_bsthp) }}</td>
                                 <td class="text-end">{{ number_format((float) $item->total_qty, 0, ',', '.') }}</td>
@@ -334,7 +336,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-4">Tidak ada data item untuk filter ini.</td>
+                                <td colspan="6" class="text-center text-muted py-4">Tidak ada data item untuk filter ini.</td>
                             </tr>
                         @endforelse
                         </tbody>

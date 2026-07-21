@@ -98,6 +98,7 @@ class DashboardController extends Controller
             ->whereNotNull('code_item')
             ->select(
                 'code_item',
+                DB::raw('MIN(customer) as customer'),
                 DB::raw('COUNT(DISTINCT bsthp_no) as jumlah_bsthp'),
                 DB::raw('COALESCE(SUM(qty), 0) as total_qty'),
                 DB::raw('COUNT(DISTINCT CASE WHEN label_barcode_no IS NOT NULL THEN label_barcode_no END) as total_barcode')
