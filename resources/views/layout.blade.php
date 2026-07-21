@@ -24,7 +24,7 @@
         .chart-box canvas { display: block; width: 100% !important; height: 100% !important; }
         .section-nav { position: sticky; top: 0; z-index: 1020; }
         .section-nav .nav-link:hover { color: #fff !important; }
-        [id^="section-"] { scroll-margin-top: 70px; }
+        [id^="section-"] { scroll-margin-top: 60px; }
     </style>
 </head>
 <body>
