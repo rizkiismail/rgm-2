@@ -30,7 +30,9 @@
                     <select name="customer" class="form-select">
                         <option value="">Semua Customer</option>
                         @foreach ($customerOptions as $c)
-                            <option value="{{ $c }}" @selected(($filters['customer'] ?? '') === $c)>{{ $c }}</option>
+                            <option value="{{ $c->customer }}" @selected(($filters['customer'] ?? '') === $c->customer)>
+                                {{ $c->customer }}{{ $c->line ? ' (Line '.$c->line.')' : '' }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -43,7 +45,16 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-6 col-md-1">
+                    <label class="form-label small text-muted mb-1">Line</label>
+                    <select name="line" class="form-select">
+                        <option value="">Semua</option>
+                        @foreach ($lineOptions as $l)
+                            <option value="{{ $l }}" @selected((string) ($filters['line'] ?? '') === (string) $l)>{{ $l }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
                     <label class="form-label small text-muted mb-1">Cari (Code Item / Part / BSTHP / Barcode)</label>
                     <input type="text" name="q" class="form-control" placeholder="Ketik kata kunci..."
                            value="{{ $filters['q'] ?? '' }}">
@@ -167,19 +178,19 @@
                 <div class="row g-4">
                     <div class="col-12 col-lg-4">
                         <h6 class="text-muted small text-uppercase mb-2">Jumlah BSTHP</h6>
-                        <div style="position: relative; height: 320px; display: block; padding-top: 8px;">
+                        <div class="chart-box" style="position: relative; height: 320px; padding-top: 8px;">
                             <canvas id="chartBsthp"></canvas>
                         </div>
                     </div>
                     <div class="col-12 col-lg-4">
                         <h6 class="text-muted small text-uppercase mb-2">Jumlah Customer</h6>
-                        <div style="position: relative; height: 320px; display: block; padding-top: 8px;">
+                        <div class="chart-box" style="position: relative; height: 320px; padding-top: 8px;">
                             <canvas id="chartCustomer"></canvas>
                         </div>
                     </div>
                     <div class="col-12 col-lg-4">
                         <h6 class="text-muted small text-uppercase mb-2">Total Item Terverifikasi</h6>
-                        <div style="position: relative; height: 320px; display: block; padding-top: 8px;">
+                        <div class="chart-box" style="position: relative; height: 320px; padding-top: 8px;">
                             <canvas id="chartPic"></canvas>
                         </div>
                     </div>
@@ -197,8 +208,52 @@
             @if (empty($picBsthpChartData['labels']))
                 <p class="text-muted mb-0">Belum ada data verifikasi PIC untuk ditampilkan.</p>
             @else
-                <div style="position: relative; height: 360px; display: block; padding-top: 8px;">
-                    <canvas id="chartPicBsthp"></canvas>
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="chart-box" style="position: relative; height: 480px; padding-top: 8px;">
+                            <canvas id="chartPicBsthp"></canvas>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- ===================== GRAFIK CUSTOMER PER LINE ===================== --}}
+    <div class="card table-card mb-4">
+        <div class="card-header bg-white fw-semibold">
+            <i class="bi bi-pie-chart-fill text-danger"></i> Grafik Customer Berdasarkan Line
+        </div>
+        <div class="card-body">
+            @if (empty($customerByLineChartData['labels']))
+                <p class="text-muted mb-0">Belum ada data customer dengan Line untuk ditampilkan.</p>
+            @else
+                <div class="row g-4 align-items-center">
+                    <div class="col-12 col-lg-6">
+                        <div class="chart-box" style="position: relative; height: 360px;">
+                            <canvas id="chartCustomerByLine"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6">
+                        <div class="table-responsive" style="max-height: 360px;">
+                            <table class="table table-sm table-hover mb-0 align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Line</th>
+                                    <th class="text-end">Jumlah Customer</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach ($customerByLineChartData['labels'] as $i => $label)
+                                    <tr>
+                                        <td>{{ $label }}</td>
+                                        <td class="text-end">{{ number_format($customerByLineChartData['values'][$i]) }}</td>
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             @endif
         </div>
@@ -217,6 +272,7 @@
                         <tr>
                             <th class="text-center">No</th>
                             <th>Customer</th>
+                            <th class="text-center">Line</th>
                             <th class="text-end">Jumlah BSTHP</th>
                             <th class="text-end">Total Qty</th>
                             <th class="text-end">Total Barcode</th>
@@ -227,13 +283,20 @@
                             <tr>
                                 <td class="text-center">{{ $loop->iteration }}</td>
                                 <td>{{ $customer->customer }}</td>
+                                <td class="text-center">
+                                    @if ($customer->line)
+                                        <span class="badge bg-secondary">{{ $customer->line }}</span>
+                                    @else
+                                        <span class="text-muted small">-</span>
+                                    @endif
+                                </td>
                                 <td class="text-end">{{ number_format($customer->jumlah_bsthp) }}</td>
                                 <td class="text-end">{{ number_format((float) $customer->total_qty, 0, ',', '.') }}</td>
                                 <td class="text-end">{{ number_format($customer->total_barcode) }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-4">Tidak ada data customer untuk filter ini.</td>
+                                <td colspan="6" class="text-center text-muted py-4">Tidak ada data customer untuk filter ini.</td>
                             </tr>
                         @endforelse
                         </tbody>
@@ -323,6 +386,7 @@
                     <th>Unit</th>
                     <th>Label Barcode</th>
                     <th>Customer</th>
+                    <th class="text-center">Line</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -338,10 +402,17 @@
                         <td>{{ $row->unit }}</td>
                         <td class="text-nowrap">{{ $row->label_barcode_no }}</td>
                         <td>{{ $row->customer }}</td>
+                        <td class="text-center">
+                            @if ($row->line)
+                                <span class="badge bg-secondary">{{ $row->line }}</span>
+                            @else
+                                <span class="text-muted small">-</span>
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="10" class="text-center text-muted py-4">Tidak ada data untuk filter ini.</td>
+                        <td colspan="11" class="text-center text-muted py-4">Tidak ada data untuk filter ini.</td>
                     </tr>
                 @endforelse
                 </tbody>
@@ -362,6 +433,7 @@
 
         const chartData = @json($chartData);
         const picBsthpChartData = @json($picBsthpChartData);
+        const customerByLineChartData = @json($customerByLineChartData);
 
         const periodLabelFormatters = {
             day: (v) => v,
@@ -384,7 +456,19 @@
         };
 
         let currentPeriod = 'day';
-        let chartBsthp, chartCustomer, chartPic, chartPicBsthp;
+        let chartBsthp, chartCustomer, chartPic, chartPicBsthp, chartPicBsthpPie, chartCustomerByLine;
+
+        /**
+         * Palet warna konsisten untuk tiap PIC (dipakai bareng oleh bar & pie chart).
+         */
+        function picColorPalette(count) {
+            const colors = [];
+            for (let i = 0; i < count; i++) {
+                const hue = Math.round((360 / Math.max(count, 1)) * i);
+                colors.push(`hsl(${hue}, 70%, 55%)`);
+            }
+            return colors;
+        }
 
         function buildPicBsthpChart() {
             const ctx = document.getElementById('chartPicBsthp');
@@ -416,6 +500,92 @@
                         y: {
                             beginAtZero: true,
                             ticks: { precision: 0 },
+                        },
+                    },
+                },
+            });
+        }
+
+        function buildPicBsthpPieChart() {
+            const ctx = document.getElementById('chartPicBsthpPie');
+            if (!ctx || !picBsthpChartData.labels?.length) return;
+
+            if (chartPicBsthpPie) chartPicBsthpPie.destroy();
+
+            const colors = picColorPalette(picBsthpChartData.labels.length);
+            const total = picBsthpChartData.values.reduce((a, b) => a + b, 0);
+
+            chartPicBsthpPie = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: picBsthpChartData.labels,
+                    datasets: [{
+                        data: picBsthpChartData.values,
+                        backgroundColor: colors,
+                        borderColor: '#fff',
+                        borderWidth: 2,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: { boxWidth: 12, font: { size: 11 } },
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (value) => {
+                                if (!total) return '';
+                                const pct = (value / total) * 100;
+                                return pct >= 4 ? pct.toFixed(0) + '%' : '';
+                            },
+                        },
+                    },
+                },
+            });
+        }
+
+        function buildCustomerByLineChart() {
+            const ctx = document.getElementById('chartCustomerByLine');
+            if (!ctx || !customerByLineChartData.labels?.length) return;
+
+            if (chartCustomerByLine) chartCustomerByLine.destroy();
+
+            const colors = picColorPalette(customerByLineChartData.labels.length);
+            const total = customerByLineChartData.values.reduce((a, b) => a + b, 0);
+
+            chartCustomerByLine = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: customerByLineChartData.labels,
+                    datasets: [{
+                        data: customerByLineChartData.values,
+                        backgroundColor: colors,
+                        borderColor: '#fff',
+                        borderWidth: 2,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: { boxWidth: 12, font: { size: 11 } },
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 10 },
+                            formatter: (value) => {
+                                if (!total) return '';
+                                const pct = (value / total) * 100;
+                                return pct >= 3 ? pct.toFixed(0) + '%' : '';
+                            },
                         },
                     },
                 },
@@ -487,15 +657,6 @@
                     labels,
                     datasets: [
                         {
-                            label: 'Jumlah PIC Aktif',
-                            data: d.pic,
-                            backgroundColor: '#fd7e14',
-                            borderColor: '#c35a00',
-                            borderWidth: 1,
-                            borderRadius: 6,
-                            order: 1,
-                        },
-                        {
                             label: 'Item Diverifikasi',
                             data: d.verified,
                             borderColor: '#198754',
@@ -517,7 +678,7 @@
                 },
                 options: {
                     ...commonOptions,
-                    plugins: { legend: { display: true, position: 'bottom' }, datalabels: { clip: false } },
+                    plugins: { legend: { display: false }, datalabels: { clip: false } },
                     layout: { padding: { top: 16, bottom: 8 } },
                 },
             });
@@ -538,6 +699,14 @@
 
         if (document.getElementById('chartPicBsthp')) {
             buildPicBsthpChart();
+        }
+
+        if (document.getElementById('chartPicBsthpPie')) {
+            buildPicBsthpPieChart();
+        }
+
+        if (document.getElementById('chartCustomerByLine')) {
+            buildCustomerByLineChart();
         }
     </script>
 @endsection

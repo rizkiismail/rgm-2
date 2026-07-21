@@ -86,7 +86,7 @@ class ReceivingGoodsImporter
                     'unit' => $this->toNullableString($data['unit']),
                     'bsthp_barcode_no' => $this->toNullableString($data['bsthp_barcode_no']),
                     'label_barcode_no' => $this->toNullableString($data['label_barcode_no']),
-                    'customer' => $this->toNullableString($data['customer']),
+                    'customer' => $this->normalizeCustomer($data['customer']),
                     'import_batch' => $batchLabel,
                     'created_at' => $now,
                     'updated_at' => $now,
@@ -180,6 +180,21 @@ class ReceivingGoodsImporter
         }
 
         return $value;
+    }
+
+    /**
+     * Sama seperti toNullableString(), tapi juga merapikan spasi ganda pada nama
+     * customer (mis. "ROKI  INDONESIA, PT." -> "ROKI INDONESIA, PT.") supaya
+     * cocok dengan nama pada tabel master `customers` saat dicocokkan Line-nya.
+     */
+    protected function normalizeCustomer(?string $value): ?string
+    {
+        $value = $this->toNullableString($value);
+        if ($value === null) {
+            return null;
+        }
+
+        return trim(preg_replace('/\s+/', ' ', $value));
     }
 
     protected function toDateTime(?string $value): ?string
