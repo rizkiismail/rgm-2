@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <style>
+        html { scroll-behavior: smooth; }
         body { background-color: #f4f6f9; }
         .navbar-brand { font-weight: 600; }
         .stat-card { border: none; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); height: 100%; }
@@ -21,6 +22,9 @@
            "grow", resizes the chart again, and the loop repeats forever unless
            the canvas is forced to display:block. */
         .chart-box canvas { display: block; width: 100% !important; height: 100% !important; }
+        .section-nav { position: sticky; top: 0; z-index: 1020; }
+        .section-nav .nav-link:hover { color: #fff !important; }
+        [id^="section-"] { scroll-margin-top: 70px; }
     </style>
 </head>
 <body>

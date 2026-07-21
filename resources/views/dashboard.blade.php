@@ -74,6 +74,14 @@
         </div>
     </div>
 
+    <nav class="nav nav-pills flex-nowrap overflow-auto gap-2 mb-4 bg-white p-2 rounded-3 shadow-sm sticky-top section-nav">
+        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-trends">Tren BSTHP Customer &amp; PIC Verifikator</a>
+        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-pic-bsthp">Jumlah BSTHP Berdasarkan PIC Verifikator</a>
+        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-customer-line">Customer Berdasarkan Line</a>
+        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-top10">Top 10 Customer &amp; Item</a>
+        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-detail-data">Detail data</a>
+    </nav>
+
     {{-- ===================== SUMMARY CARDS ===================== --}}
     <div class="row g-3 mb-4">
         <div class="col-6 col-lg-2">
@@ -162,7 +170,7 @@
     </div>
 
     {{-- ===================== GRAFIK TREN ===================== --}}
-    <div class="card table-card mb-6">
+    <div class="card table-card mb-6" id="section-trends">
         <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
             <span class="fw-semibold"><i class="bi bi-graph-up-arrow text-primary"></i> Grafik Tren BSTHP, Customer &amp; PIC Verifikator</span>
             <div class="btn-group btn-group-sm" role="group" id="chartPeriodToggle">
@@ -200,7 +208,7 @@
     </div>
 
     {{-- ===================== GRAFIK BSTHP PER PIC ===================== --}}
-    <div class="card table-card mb-4">
+    <div class="card table-card mb-4" id="section-pic-bsthp">
         <div class="card-header bg-white fw-semibold">
             <i class="bi bi-bar-chart-line-fill text-primary"></i> Grafik Jumlah BSTHP Berdasarkan PIC Verifikator
         </div>
@@ -220,7 +228,7 @@
     </div>
 
     {{-- ===================== GRAFIK CUSTOMER PER LINE ===================== --}}
-    <div class="card table-card mb-4">
+    <div class="card table-card mb-4" id="section-customer-line">
         <div class="card-header bg-white fw-semibold">
             <i class="bi bi-pie-chart-fill text-danger"></i> Grafik Customer Berdasarkan Line
         </div>
@@ -262,7 +270,7 @@
     </div>
 
     {{-- ===================== TOP 10 CUSTOMER & ITEM ===================== --}}
-    <div class="row g-4 mb-4">
+    <div class="row g-4 mb-4" id="section-top10">
         <div class="col-12 col-xl-6">
             <div class="card table-card h-100">
                 <div class="card-header bg-white fw-semibold">
@@ -372,7 +380,7 @@
     </div>
 
     {{-- ===================== DATA TABLE ===================== --}}
-    <div class="card table-card">
+    <div class="card table-card" id="section-detail-data">
         <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
             <span><i class="bi bi-table"></i> Detail Data ({{ number_format($rows->total()) }} baris sesuai filter)</span>
         </div>
