@@ -211,10 +211,11 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-people-fill text-primary"></i> Top 10 Customer
                 </div>
-                <div class="table-responsive">
+                <div class="table-responsive" style="height: 370px; overflow-x: auto; overflow-y: auto; display: block;">
                     <table class="table table-sm table-hover table-striped mb-0 align-middle">
                         <thead class="sticky-th">
                         <tr>
+                            <th class="text-center">No</th>
                             <th>Customer</th>
                             <th class="text-end">Jumlah BSTHP</th>
                             <th class="text-end">Total Qty</th>
@@ -224,6 +225,7 @@
                         <tbody>
                         @forelse ($topCustomers as $customer)
                             <tr>
+                                <td class="text-center">{{ $loop->iteration }}</td>
                                 <td>{{ $customer->customer }}</td>
                                 <td class="text-end">{{ number_format($customer->jumlah_bsthp) }}</td>
                                 <td class="text-end">{{ number_format((float) $customer->total_qty, 0, ',', '.') }}</td>
@@ -245,10 +247,11 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-box-seam text-success"></i> Top 10 Item
                 </div>
-                <div class="table-responsive">
+                <div class="table-responsive" style="height: 370px; overflow-x: auto; overflow-y: auto; display: block;">
                     <table class="table table-sm table-hover table-striped mb-0 align-middle">
                         <thead class="sticky-th">
                         <tr>
+                            <th class="text-center">No</th>
                             <th>Item</th>
                             <th class="text-end">Jumlah BSTHP</th>
                             <th class="text-end">Total Qty</th>
@@ -258,6 +261,7 @@
                         <tbody>
                         @forelse ($topItems as $item)
                             <tr>
+                                <td class="text-center">{{ $loop->iteration }}</td>
                                 <td>{{ $item->code_item }}</td>
                                 <td class="text-end">{{ number_format($item->jumlah_bsthp) }}</td>
                                 <td class="text-end">{{ number_format((float) $item->total_qty, 0, ',', '.') }}</td>

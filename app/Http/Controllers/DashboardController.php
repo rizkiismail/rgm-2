@@ -77,9 +77,7 @@ class DashboardController extends Controller
             )
             ->groupBy('customer')
             ->orderByDesc('jumlah_bsthp')
-            ->orderByDesc('total_qty')
             ->orderBy('customer')
-            ->limit(10)
             ->get();
 
         // Top 10 item berdasarkan jumlah BSTHP, total qty, dan total barcode.
@@ -93,9 +91,7 @@ class DashboardController extends Controller
             )
             ->groupBy('code_item')
             ->orderByDesc('jumlah_bsthp')
-            ->orderByDesc('total_qty')
             ->orderBy('code_item')
-            ->limit(10)
             ->get();
 
         // Daftar customer & PIC untuk dropdown filter (dari seluruh data, bukan hasil filter).
