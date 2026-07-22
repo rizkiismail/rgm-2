@@ -272,8 +272,8 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-people-fill text-primary"></i> Top 10 Customer
                 </div>
-                <div class="table-responsive" style="max-height: 24rem; overflow-x: auto; overflow-y: auto; display: block;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.70rem;">
+                <div class="table-responsive" style="max-height: 20rem; overflow-x: auto; overflow-y: auto; display: block;">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.63rem;">
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
@@ -318,8 +318,8 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-box-seam text-success"></i> Top 10 Code Item
                 </div>
-                <div class="table-responsive" style="max-height: 24rem; overflow-x: auto; overflow-y: auto; display: block;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.80rem;">
+                <div class="table-responsive" style="height: 20rem; overflow-x: auto; overflow-y: auto; display: block;">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.70rem;">
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
@@ -362,7 +362,7 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-person-badge-fill text-info"></i> Top 10 PIC PPIC Delivery
                 </div>
-                <div class="table-responsive" style="max-height: 24rem; overflow-x: auto; overflow-y: auto; display: block;">
+                <div class="table-responsive" style="height: 20rem; overflow-x: auto; overflow-y: auto; display: block;">
                     <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.70rem;">
                         <thead class="sticky-th">
                         <tr>

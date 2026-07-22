@@ -98,7 +98,6 @@ class BalanceReturController extends Controller
             ->groupBy('customer_name')
             ->orderByDesc('total_qty_retur')
             ->orderBy('customer_name')
-            ->limit(10)
             ->get();
 
         $topCodeItems = (clone $baseQuery)
@@ -114,7 +113,6 @@ class BalanceReturController extends Controller
             ->groupBy('code_item')
             ->orderByDesc('total_qty_retur')
             ->orderBy('code_item')
-            ->limit(10)
             ->get();
 
         $topPicDelivery = (clone $baseQuery)
@@ -130,7 +128,6 @@ class BalanceReturController extends Controller
             ->groupBy('pic_ppic_delivery')
             ->orderByDesc('total_qty_delivery')
             ->orderBy('pic_ppic_delivery')
-            ->limit(10)
             ->get();
 
         // Data untuk bar chart top 10 (dari query yang sama, tanpa query ulang).
