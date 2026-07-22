@@ -281,7 +281,26 @@
                                 @foreach ($customerByLineChartData['labels'] as $i => $label)
                                     <tr>
                                         <td>{{ $label }}</td>
-                                        <td class="text-end">{{ number_format($customerByLineChartData['values'][$i]) }}</td>
+                                        <td class="text-end">
+                                            <details class="d-inline-block">
+                                                <summary class="btn btn-link p-0 fw-semibold text-primary">
+                                                    {{ number_format($customerByLineChartData['values'][$i]) }}
+                                                </summary>
+                                                <div class="mt-2 border rounded p-2 bg-light" style="min-width: 240px;">
+                                                    <div class="small text-muted mb-2">Customer di {{ $label }}</div>
+                                                    @php $customers = $customerByLineChartData['details'][$i]['customers'] ?? []; @endphp
+                                                    @if (empty($customers))
+                                                        <div class="small text-muted">Tidak ada customer.</div>
+                                                    @else
+                                                        <ol class="mb-0 ps-3 small">
+                                                            @foreach ($customers as $customer)
+                                                                <li>{{ $customer }}</li>
+                                                            @endforeach
+                                                        </ol>
+                                                    @endif
+                                                </div>
+                                            </details>
+                                        </td>
                                         <td class="text-end">{{ number_format($customerByLineChartData['total_barcode'][$i] ?? 0) }}</td>
                                     </tr>
                                 @endforeach

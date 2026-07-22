@@ -209,10 +209,35 @@ class DashboardController extends Controller
             ->orderBy('line_group')
             ->get();
 
+        $details = [];
+
+        foreach ($result as $row) {
+            $lineValue = (int) $row->line_group;
+            $label = $lineValue === 0 ? 'Tanpa Line' : 'Line '.$lineValue;
+
+            $customers = (clone $baseQuery)
+                ->whereNotNull('customer')
+                ->leftJoin('customers', 'customers.name', '=', 'receiving_goods.customer')
+                ->whereRaw('COALESCE(customers.line, 0) = ?', [$lineValue])
+                ->select('receiving_goods.customer')
+                ->distinct()
+                ->orderBy('receiving_goods.customer')
+                ->pluck('receiving_goods.customer')
+                ->filter()
+                ->values()
+                ->all();
+
+            $details[] = [
+                'label' => $label,
+                'customers' => $customers,
+            ];
+        }
+
         return [
             'labels' => $result->map(fn ($r) => $r->line_group == 0 ? 'Tanpa Line' : 'Line '.$r->line_group)->all(),
             'values' => $result->pluck('jumlah')->map(fn ($v) => (int) $v)->all(),
             'total_barcode' => $result->pluck('total_barcode')->map(fn ($v) => (int) $v)->all(),
+            'details' => $details,
         ];
     }
 
