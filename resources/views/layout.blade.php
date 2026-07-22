@@ -10,6 +10,17 @@
         html { scroll-behavior: smooth; }
         body { background-color: #f4f6f9; }
         .navbar-brand { font-weight: 600; }
+        .dropdown-menu { border: 1px solid #e9ecef; box-shadow: 0 8px 20px rgba(0,0,0,.08); }
+        .dropdown-item {
+            color: #212529;
+            background-color: transparent;
+        }
+        .dropdown-item:hover,
+        .dropdown-item:focus,
+        .dropdown-item.active {
+            background-color: transparent;
+            color: #0d6efd;
+        }
         .stat-card { border: none; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); height: 100%; }
         .stat-card .stat-value { font-size: 1.9rem; font-weight: 700; }
         .stat-card .stat-icon { font-size: 1.6rem; opacity: .85; }
@@ -71,12 +82,30 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 app-navbar">
     <div class="container-fluid px-4">
         <a class="navbar-brand" href="{{ route('dashboard') }}">
-            <i class="bi bi-box-seam-fill me-1"></i> Monitoring Receiving Goods
+            <i class="bi bi-box-seam-fill me-1"></i>
+            {{ request()->routeIs('retur.dashboard') ? 'Monitoring Balance Retur' : 'Monitoring Receiving Goods' }}
         </a>
         <span class="navbar-text text-white-50 d-none d-md-inline">PT Karya Putra Sangkuriang &mdash; Dept Warehouse</span>
-        <div class="ms-auto">
-            <a href="{{ route('dashboard') }}" class="btn btn-sm btn-outline-light me-2"><i class="bi bi-speedometer2"></i> Dashboard</a>
-            <a href="{{ route('import.form') }}" class="btn btn-sm btn-warning"><i class="bi bi-upload"></i> Upload Data</a>
+        <div class="ms-auto d-flex flex-wrap gap-2 justify-content-end">
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm {{ request()->routeIs(['dashboard', 'retur.dashboard']) ? 'btn-light' : 'btn-outline-light' }} dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-grid-3x3-gap"></i> Dashboard
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                            <i class="bi bi-speedometer2 me-2"></i> Receiving Goods
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item {{ request()->routeIs('retur.dashboard') ? 'active' : '' }}" href="{{ route('retur.dashboard') }}">
+                            <i class="bi bi-arrow-return-left me-2"></i> Balance Retur
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <a href="{{ route('import.form') }}" class="btn btn-sm {{ request()->routeIs('import.form') ? 'btn-light' : 'btn-outline-light' }}"><i class="bi bi-upload"></i> Upload Receiving</a>
+            <a href="{{ route('retur.import.form') }}" class="btn btn-sm {{ request()->routeIs('retur.import.form') ? 'btn-warning' : 'btn-outline-warning' }}"><i class="bi bi-upload"></i> Upload Retur</a>
         </div>
     </div>
 </nav>
