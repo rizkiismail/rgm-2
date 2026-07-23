@@ -92,12 +92,12 @@
             <i class="bi bi-list fs-5"></i>
         </button>
         <nav id="sectionNavCollapse" class="nav nav-pills collapse flex-column flex-md-row flex-md-nowrap overflow-auto gap-2 bg-white p-2 rounded-3 shadow-sm section-nav">
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link active" href="#section-summary" data-section="section-summary">Ringkasan</a>
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-trends" data-section="section-trends">Tren BSTHP Customer &amp; PIC Verifikator</a>
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-pic-bsthp" data-section="section-pic-bsthp">Jumlah BSTHP Berdasarkan PIC Verifikator</a>
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-customer-line" data-section="section-customer-line">Customer Berdasarkan Line</a>
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-top10" data-section="section-top10">Top 10 Customer &amp; Item</a>
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" data-section="section-detail-data" href="#section-detail-data">Detail data</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link active" href="#section-summary" data-section="section-summary" style="font-size: 0.80rem;">Ringkasan</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-trends" data-section="section-trends" style="font-size: 0.80rem;">Tren BSTHP Customer &amp; PIC Verifikator</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-pic-bsthp" data-section="section-pic-bsthp" style="font-size: 0.80rem;">Jumlah BSTHP Berdasarkan PIC Verifikator</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-customer-line" data-section="section-customer-line" style="font-size: 0.80rem;">Customer Berdasarkan Line</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-top10" data-section="section-top10" style="font-size: 0.80rem;">Top 10 Customer &amp; Item</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" data-section="section-detail-data" href="#section-detail-data" style="font-size: 0.80rem;">Detail data</a>
         </nav>
     </div>
 
@@ -262,7 +262,7 @@
             @else
                 <div class="row g-4">
                     <div class="col-12">
-                        <div class="chart-box" style="position: relative; height: 480px; padding-top: 8px;">
+                        <div class="chart-box" style="position: relative; height: 380px; padding-top: 8px;">
                             <canvas id="chartPicBsthp"></canvas>
                         </div>
                     </div>
