@@ -408,6 +408,7 @@
             <table class="table table-sm table-hover table-striped mb-0 align-middle">
                 <thead class="sticky-th">
                 <tr>
+                    <th>No.</th>
                     <th>Tanggal Terima</th>
                     <th>No. BSTHP</th>
                     <th>PIC Verifikasi</th>
@@ -424,6 +425,7 @@
                 <tbody>
                 @forelse ($rows as $row)
                     <tr>
+                        <td class="text-center">{{ $rows->firstItem() + $loop->index }}</td>
                         <td class="text-nowrap">{{ $row->date_income?->format('d-m-Y H:i') }}</td>
                         <td class="text-nowrap">{{ $row->bsthp_no }}</td>
                         <td>{{ $row->verify_by }}</td>

@@ -196,16 +196,16 @@
         <span class="navbar-text text-white-50 d-none d-md-inline">PT Karya Putra Sangkuriang &mdash; Dept Warehouse</span>
         <div class="ms-auto d-flex flex-wrap gap-2 justify-content-end align-items-center">
             <button type="button" id="themeToggle" class="btn btn-sm btn-outline-light" aria-pressed="false" title="Ubah tema">
-                <i class="bi bi-moon-stars-fill"></i> <span class="d-none d-sm-inline">Dark</span>
+                <i class="bi bi-moon-stars-fill"></i> 
             </button>
             <div class="btn-group">
                 <button type="button" class="btn btn-sm {{ request()->routeIs(['dashboard', 'retur.dashboard']) ? 'btn-primary' : 'btn-outline-light' }} dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-grid-3x3-gap"></i> Dashboard
+                    <i class="bi bi-speedometer2"></i> Dashboard
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li>
                         <a class="dropdown-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-                            <i class="bi bi-speedometer2 me-2"></i> Receiving Goods
+                            <i class="bi bi-folder2 me-2"></i> Receiving Goods
                         </a>
                     </li>
                     <li>

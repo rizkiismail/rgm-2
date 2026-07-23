@@ -440,6 +440,7 @@
             <table class="table table-sm table-hover table-striped mb-0 align-middle">
                 <thead class="sticky-th">
                 <tr>
+                    <th>No.</th>
                     <th>Tanggal Retur</th>
                     <th>No. Retur</th>
                     <th>Customer</th>
@@ -461,6 +462,7 @@
                 <tbody>
                 @forelse ($rows as $row)
                     <tr>
+                        <td class="text-center">{{ $rows->firstItem() + $loop->index }}</td>
                         <td class="text-nowrap">{{ $row->date_retur?->format('d-m-Y') }}</td>
                         <td class="text-nowrap">{{ $row->no_retur }}</td>
                         <td>{{ $row->customer_name }}</td>
