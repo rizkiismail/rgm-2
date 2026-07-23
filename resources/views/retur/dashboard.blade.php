@@ -70,8 +70,11 @@
     </nav>
 
     {{-- ===================== SUMMARY CARDS ===================== --}}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+       
+    </div>
     <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -85,7 +88,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -98,7 +101,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -111,7 +114,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -125,7 +128,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -142,7 +145,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -159,10 +162,6 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    {{-- ===================== FINAL STATUS SUMMARY ===================== --}}
-    <div class="row g-3 mb-4">
         <div class="col-6 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
@@ -404,8 +403,11 @@
 
     {{-- ===================== DATA TABLE ===================== --}}
     <div class="card table-card" id="section-detail-data">
-        <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+        <div class="card-header bg-white fw-semibold d-flex flex-wrap justify-content-between align-items-center gap-2">
             <span><i class="bi bi-table"></i> Detail Data ({{ number_format($rows->total()) }} baris sesuai filter)</span>
+            <a href="{{ $exportUrl }}" class="btn btn-success btn-sm">
+                <i class="bi bi-file-earmark-excel-fill"></i> Export Excel
+            </a>
         </div>
         <div class="table-responsive" style="max-height: 65vh;">
             <table class="table table-sm table-hover table-striped mb-0 align-middle">
@@ -419,8 +421,10 @@
                     <th class="text-end">Qty Retur</th>
                     <th>Unit</th>
                     <th class="text-end">Qty Receiving</th>
+                    <th class="text-end">Qty Pending Receiving</th>
                     <th class="text-center">Status Receiving</th>
                     <th class="text-end">Qty Delivery</th>
+                    <th class="text-end">Qty Pending Delivery</th>
                     <th class="text-center">Status Delivery</th>
                     <th class="text-center">Final Status</th>
                     <th class="text-center">Note</th>
@@ -438,6 +442,7 @@
                         <td class="text-end">{{ number_format((float) $row->qty_retur) }}</td>
                         <td>{{ $row->unit }}</td>
                         <td class="text-end">{{ number_format((float) $row->qty_receiving_part) }}</td>
+                        <td class="text-end">{{ number_format((float) $row->qty_pending_receiving_part) }}</td>
                         <td class="text-center">
                             @if ($row->status_receiving === 'CLOSE')
                                 <span class="badge bg-success">CLOSE</span>
@@ -448,6 +453,7 @@
                             @endif
                         </td>
                         <td class="text-end">{{ number_format((float) $row->qty_delivery_part) }}</td>
+                        <td class="text-end">{{ number_format((float) $row->qty_pending_delivery_part) }}</td>
                         <td class="text-center">
                             @if ($row->status_delivery === 'CLOSE')
                                 <span class="badge bg-success">CLOSE</span>

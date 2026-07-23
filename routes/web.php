@@ -12,6 +12,7 @@ Route::get('/import', [ImportController::class, 'form'])->name('import.form');
 Route::post('/import', [ImportController::class, 'store'])->name('import.store');
 
 Route::get('/retur', [BalanceReturController::class, 'index'])->name('retur.dashboard');
+Route::get('/retur/export', [BalanceReturController::class, 'export'])->name('retur.export');
 
 Route::get('/retur/import', [BalanceReturImportController::class, 'form'])->name('retur.import.form');
 Route::post('/retur/import', [BalanceReturImportController::class, 'store'])->name('retur.import.store');

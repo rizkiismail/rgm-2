@@ -11,64 +11,20 @@ class BalanceReturController extends Controller
 {
     public function index(Request $request)
     {
-        $request->validate([
-            'date_from' => ['nullable', 'date'],
-            'date_to' => ['nullable', 'date'],
-            'customer' => ['nullable', 'string'],
-            'final_status' => ['nullable', 'in:CLOSE,OPEN'],
-            'q' => ['nullable', 'string'],
-        ]);
-
-        // Rentang data yang tersedia di database, dipakai sebagai batas default.
-        $bounds = BalanceRetur::selectRaw('MIN(date_retur) as min_date, MAX(date_retur) as max_date')->first();
-
-        $dateFrom = $request->filled('date_from')
-            ? Carbon::parse($request->date_from)->startOfDay()
-            : ($bounds->min_date ? Carbon::parse($bounds->min_date)->startOfDay() : null);
-
-        $dateTo = $request->filled('date_to')
-            ? Carbon::parse($request->date_to)->endOfDay()
-            : ($bounds->max_date ? Carbon::parse($bounds->max_date)->endOfDay() : null);
-
-        $baseQuery = BalanceRetur::query();
-
-        if ($dateFrom) {
-            $baseQuery->where('date_retur', '>=', $dateFrom);
-        }
-        if ($dateTo) {
-            $baseQuery->where('date_retur', '<=', $dateTo);
-        }
-        if ($request->filled('customer')) {
-            $baseQuery->where('customer_name', $request->customer);
-        }
-        if ($request->filled('final_status')) {
-            $baseQuery->where('final_status', $request->final_status);
-        }
-        if ($request->filled('q')) {
-            $keyword = $request->q;
-            $baseQuery->where(function ($sub) use ($keyword) {
-                $sub->where('code_item', 'like', "%{$keyword}%")
-                    ->orWhere('part_name', 'like', "%{$keyword}%")
-                    ->orWhere('no_retur', 'like', "%{$keyword}%")
-                    ->orWhere('customer_name', 'like', "%{$keyword}%")
-                    ->orWhere('pic_ppic_delivery', 'like', "%{$keyword}%");
-            });
-        }
+        ['baseQuery' => $baseQuery, 'dateFrom' => $dateFrom, 'dateTo' => $dateTo, 'bounds' => $bounds] = $this->applyFilters($request);
 
         // ===================== KARTU RINGKASAN =====================
-        $totalRetur = (clone $baseQuery)->distinct('no_retur')->count('no_retur');
-        $totalCustomer = (clone $baseQuery)->whereNotNull('customer_name')->distinct('customer_name')->count('customer_name');
-        $totalCodeItem = (clone $baseQuery)->whereNotNull('code_item')->distinct('code_item')->count('code_item');
-        $totalRows = (clone $baseQuery)->count();
-        $totalQtyRetur = (clone $baseQuery)->sum('qty_retur');
-
-        $totalQtyReceivingPart = (clone $baseQuery)->sum('qty_receiving_part');
-        $receivingStatusCount = $this->statusBreakdown($baseQuery, 'status_receiving');
-
-        $totalQtyDeliveryPart = (clone $baseQuery)->sum('qty_delivery_part');
-        $deliveryStatusCount = $this->statusBreakdown($baseQuery, 'status_delivery');
-
-        $finalStatusCount = $this->statusBreakdown($baseQuery, 'final_status');
+        $summary = $this->buildSummary($baseQuery);
+        $totalRetur = $summary['totalRetur'];
+        $totalCustomer = $summary['totalCustomer'];
+        $totalCodeItem = $summary['totalCodeItem'];
+        $totalRows = $summary['totalRows'];
+        $totalQtyRetur = $summary['totalQtyRetur'];
+        $totalQtyReceivingPart = $summary['totalQtyReceivingPart'];
+        $receivingStatusCount = $summary['receivingStatusCount'];
+        $totalQtyDeliveryPart = $summary['totalQtyDeliveryPart'];
+        $deliveryStatusCount = $summary['deliveryStatusCount'];
+        $finalStatusCount = $summary['finalStatusCount'];
 
         // ===================== GRAFIK TREN (Harian/Bulanan/Tahunan) =====================
         $chartData = [
@@ -150,6 +106,15 @@ class BalanceReturController extends Controller
         // Tabel detail dengan pencarian sederhana + pagination.
         $rows = (clone $baseQuery)->orderByDesc('date_retur')->paginate(25)->withQueryString();
 
+        // URL export Excel yang membawa filter (tanggal efektif + filter lain) yang sedang aktif.
+        $exportUrl = route('retur.export', array_filter([
+            'date_from' => $dateFrom?->format('Y-m-d'),
+            'date_to' => $dateTo?->format('Y-m-d'),
+            'customer' => $request->customer,
+            'final_status' => $request->final_status,
+            'q' => $request->q,
+        ]));
+
         return view('retur.dashboard', [
             'dateFrom' => $dateFrom,
             'dateTo' => $dateTo,
@@ -177,7 +142,121 @@ class BalanceReturController extends Controller
             'rows' => $rows,
             'filters' => $request->only(['date_from', 'date_to', 'customer', 'final_status', 'q']),
             'hasData' => BalanceRetur::query()->exists(),
+            'exportUrl' => $exportUrl,
         ]);
+    }
+
+    /**
+     * Export Ringkasan (Summary Cards) beserta tabel Detail Data ke file Excel,
+     * mengikuti filter yang sedang aktif pada dashboard (tanpa pagination).
+     */
+    public function export(Request $request)
+    {
+        ['baseQuery' => $baseQuery, 'dateFrom' => $dateFrom, 'dateTo' => $dateTo] = $this->applyFilters($request);
+
+        $summary = $this->buildSummary($baseQuery);
+
+        $rows = (clone $baseQuery)->orderByDesc('date_retur')->get();
+
+        $filtersMeta = [
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'customer' => $request->customer,
+            'final_status' => $request->final_status,
+            'q' => $request->q,
+        ];
+
+        $exporter = new \App\Services\BalanceReturExcelExporter();
+
+        return $exporter->export($summary, $rows, $filtersMeta);
+    }
+
+    /**
+     * Terapkan filter dari request (tanggal, customer, final status, pencarian)
+     * ke query BalanceRetur. Dipakai bersama oleh index() dan export() supaya
+     * hasil yang ditampilkan dan yang diexport selalu konsisten.
+     *
+     * @return array{baseQuery: \Illuminate\Database\Eloquent\Builder, dateFrom: ?Carbon, dateTo: ?Carbon, bounds: object}
+     */
+    protected function applyFilters(Request $request): array
+    {
+        $request->validate([
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date'],
+            'customer' => ['nullable', 'string'],
+            'final_status' => ['nullable', 'in:CLOSE,OPEN'],
+            'q' => ['nullable', 'string'],
+        ]);
+
+        // Rentang data yang tersedia di database, dipakai sebagai batas default.
+        $bounds = BalanceRetur::selectRaw('MIN(date_retur) as min_date, MAX(date_retur) as max_date')->first();
+
+        $dateFrom = $request->filled('date_from')
+            ? Carbon::parse($request->date_from)->startOfDay()
+            : ($bounds->min_date ? Carbon::parse($bounds->min_date)->startOfDay() : null);
+
+        $dateTo = $request->filled('date_to')
+            ? Carbon::parse($request->date_to)->endOfDay()
+            : ($bounds->max_date ? Carbon::parse($bounds->max_date)->endOfDay() : null);
+
+        $baseQuery = BalanceRetur::query();
+
+        if ($dateFrom) {
+            $baseQuery->where('date_retur', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $baseQuery->where('date_retur', '<=', $dateTo);
+        }
+        if ($request->filled('customer')) {
+            $baseQuery->where('customer_name', $request->customer);
+        }
+        if ($request->filled('final_status')) {
+            $baseQuery->where('final_status', $request->final_status);
+        }
+        if ($request->filled('q')) {
+            $keyword = $request->q;
+            $baseQuery->where(function ($sub) use ($keyword) {
+                $sub->where('code_item', 'like', "%{$keyword}%")
+                    ->orWhere('part_name', 'like', "%{$keyword}%")
+                    ->orWhere('no_retur', 'like', "%{$keyword}%")
+                    ->orWhere('customer_name', 'like', "%{$keyword}%")
+                    ->orWhere('pic_ppic_delivery', 'like', "%{$keyword}%");
+            });
+        }
+
+        return [
+            'baseQuery' => $baseQuery,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'bounds' => $bounds,
+        ];
+    }
+
+    /**
+     * Hitung seluruh metrik Ringkasan (Summary Cards) dari query yang sudah difilter.
+     * Dipakai bersama oleh index() (tampilan) dan export() (Excel) supaya angkanya sama persis.
+     *
+     * @return array{
+     *     totalRetur:int, totalCustomer:int, totalCodeItem:int, totalRows:int, totalQtyRetur:float,
+     *     totalQtyReceivingPart:float, receivingStatusCount:array{CLOSE:int,OPEN:int},
+     *     totalQtyDeliveryPart:float, deliveryStatusCount:array{CLOSE:int,OPEN:int},
+     *     finalStatusCount:array{CLOSE:int,OPEN:int}
+     * }
+     */
+    protected function buildSummary($baseQuery): array
+    {
+        return [
+            'totalRetur' => (clone $baseQuery)->distinct('no_retur')->count('no_retur'),
+            'totalCustomer' => (clone $baseQuery)->whereNotNull('customer_name')->distinct('customer_name')->count('customer_name'),
+            'totalCodeItem' => (clone $baseQuery)->whereNotNull('code_item')->distinct('code_item')->count('code_item'),
+            'totalRows' => (clone $baseQuery)->count(),
+            'totalQtyRetur' => (clone $baseQuery)->sum('qty_retur'),
+            'totalQtyReceivingPart' => (clone $baseQuery)->sum('qty_receiving_part'),
+            'receivingStatusCount' => $this->statusBreakdown($baseQuery, 'status_receiving'),
+            'totalQtyDeliveryPart' => (clone $baseQuery)->sum('qty_delivery_part'),
+            'deliveryStatusCount' => $this->statusBreakdown($baseQuery, 'status_delivery'),
+            'finalStatusCount' => $this->statusBreakdown($baseQuery, 'final_status'),
+        ];
     }
 
     /**
