@@ -443,7 +443,7 @@
                 <tbody>
                 @forelse ($rows as $row)
                     <tr>
-                        <td class="text-center">{{ $loop->iteration }}</td>
+                        <td class="text-center">{{ $rows->firstItem() + $loop->index }}</td>
                         <td class="text-nowrap">{{ $row->date_income?->format('d-m-Y H:i') }}</td>
                         <td class="text-nowrap">{{ $row->bsthp_no }}</td>
                         <td>{{ $row->verify_by }}</td>
