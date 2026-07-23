@@ -49,6 +49,7 @@
         }
 
         html { scroll-behavior: smooth; }
+        html, body { overflow-x: clip; max-width: 100%; }
         body {
             background-color: var(--body-bg);
             color: var(--body-color);
@@ -146,10 +147,13 @@
             background-color: var(--card-bg);
             border-radius: 14px;
         }
-        .section-nav {
+        .section-nav-wrapper {
             position: sticky;
             top: calc(var(--navbar-h) + var(--filter-h));
             z-index: 1020;
+            background-color: var(--body-bg);
+        }
+        .section-nav {
             background-color: var(--card-bg);
         }
         .section-nav .nav-link {
@@ -182,41 +186,106 @@
         #backToTop.show { opacity: 1; visibility: visible; transform: translateY(0); }
         #backToTop:hover { background-color: #000; color: #fff; }
         @media (max-width: 576px) {
-            #backToTop { right: 16px; bottom: 16px; width: 42px; height: 42px; font-size: 1.05rem; }
+            #backToTop { right: 14px; bottom: 14px; width: 40px; height: 40px; font-size: 1rem; }
         }
+
+        /* ===== Mobile typography: keep text from feeling oversized on small screens ===== */
+        @media (max-width: 576px) {
+            body { font-size: .92rem; }
+            .navbar-brand { font-size: 1rem; }
+            .navbar-text { font-size: .78rem; }
+            .stat-card .stat-value { font-size: 1.35rem; }
+            .stat-card .stat-icon { font-size: 1.2rem; }
+            .stat-card .small { font-size: .72rem; }
+            .card-header { font-size: .88rem; }
+            .section-nav .nav-link,
+            .section-nav-link,
+            #filterToggle,
+            #sectionNavToggle { font-size: .8rem; }
+            .btn-sm { font-size: .78rem; padding: .3rem .55rem; }
+            .form-label.small { font-size: .72rem; }
+            h6.small { font-size: .68rem; }
+        }
+
+        /* ===== Responsive navbar / hamburger menus ===== */
+        .navbar-toggler {
+            border-color: rgba(255,255,255,.35);
+        }
+        @media (max-width: 991.98px) {
+            #navbarContent .btn-group,
+            #navbarContent > div > .btn,
+            #navbarContent .btn-group .btn {
+                width: 100%;
+            }
+            #navbarContent .dropdown-menu {
+                width: 100%;
+            }
+        }
+
+        /* Filter card hamburger toggle (mobile) */
+        #filterToggle { display: none; }
+        @media (max-width: 767.98px) {
+            #filterToggle { display: flex; }
+        }
+        .filter-collapse-body { }
+        @media (max-width: 767.98px) {
+            .filter-collapse-body.collapse:not(.show) { display: none; }
+        }
+        @media (min-width: 768px) {
+            .filter-collapse-body.collapse { display: block !important; height: auto !important; }
+        }
+
+        /* Section navlink hamburger toggle (mobile) */
+        #sectionNavToggle { display: none; }
+        @media (max-width: 767.98px) {
+            #sectionNavToggle { display: flex; }
+        }
+        @media (max-width: 767.98px) {
+            .section-nav.collapse:not(.show) { display: none; }
+        }
+        @media (min-width: 768px) {
+            .section-nav.collapse { display: flex !important; height: auto !important; }
+        }
+        .section-nav.flex-column .nav-link { text-align: left; width: 100%; }
     </style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 app-navbar">
-    <div class="container-fluid px-4">
+    <div class="container-fluid px-3 px-md-4">
         <a class="navbar-brand" href="{{ route('dashboard') }}">
             <i class="bi bi-box-seam-fill me-1"></i>
             {{ request()->routeIs('retur.dashboard') ? 'Monitoring Balance Retur' : 'Monitoring Receiving Goods' }}
         </a>
-        <span class="navbar-text text-white-50 d-none d-md-inline">PT Karya Putra Sangkuriang &mdash; Dept Warehouse</span>
-        <div class="ms-auto d-flex flex-wrap gap-2 justify-content-end align-items-center">
-            <button type="button" id="themeToggle" class="btn btn-sm btn-outline-light" aria-pressed="false" title="Ubah tema">
-                <i class="bi bi-moon-stars-fill"></i> 
-            </button>
-            <div class="btn-group">
-                <button type="button" class="btn btn-sm {{ request()->routeIs(['dashboard', 'retur.dashboard']) ? 'btn-primary' : 'btn-outline-light' }} dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-speedometer2"></i> Dashboard
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li>
-                        <a class="dropdown-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-                            <i class="bi bi-folder2 me-2"></i> Receiving Goods
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item {{ request()->routeIs('retur.dashboard') ? 'active' : '' }}" href="{{ route('retur.dashboard') }}">
-                            <i class="bi bi-arrow-return-left me-2"></i> Balance Retur
-                        </a>
-                    </li>
-                </ul>
+        <button type="button" id="themeToggle" class="btn btn-sm btn-outline-light order-lg-2 ms-auto ms-lg-0 me-2" aria-pressed="false" title="Ubah tema">
+            <i class="bi bi-moon-stars-fill"></i>
+        </button>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Buka menu navigasi">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <span class="navbar-text text-white-50 d-block d-lg-inline mt-2 mt-lg-0">PT Karya Putra Sangkuriang &mdash; Dept Warehouse</span>
+            <div class="d-flex flex-column flex-lg-row flex-wrap gap-2 ms-lg-auto align-items-stretch align-items-lg-center mt-3 mt-lg-0">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm {{ request()->routeIs(['dashboard', 'retur.dashboard']) ? 'btn-primary' : 'btn-outline-light' }} dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                                <i class="bi bi-folder2 me-2"></i> Receiving Goods
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item {{ request()->routeIs('retur.dashboard') ? 'active' : '' }}" href="{{ route('retur.dashboard') }}">
+                                <i class="bi bi-arrow-return-left me-2"></i> Balance Retur
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <a href="{{ route('import.form') }}" class="btn btn-sm {{ request()->routeIs('import.form') ? 'btn-secondary' : 'btn-outline-light' }}"><i class="bi bi-upload"></i> Upload Receiving</a>
+                <a href="{{ route('retur.import.form') }}" class="btn btn-sm {{ request()->routeIs('retur.import.form') ? 'btn-warning' : 'btn-outline-warning' }}"><i class="bi bi-upload"></i> Upload Retur</a>
             </div>
-            <a href="{{ route('import.form') }}" class="btn btn-sm {{ request()->routeIs('import.form') ? 'btn-secondary' : 'btn-outline-light' }}"><i class="bi bi-upload"></i> Upload Receiving</a>
-            <a href="{{ route('retur.import.form') }}" class="btn btn-sm {{ request()->routeIs('retur.import.form') ? 'btn-warning' : 'btn-outline-warning' }}"><i class="bi bi-upload"></i> Upload Retur</a>
         </div>
     </div>
 </nav>
@@ -328,7 +397,29 @@
             if (filterEl) {
                 new ResizeObserver(updateStickyOffsets).observe(filterEl);
             }
+            var navbarEl = document.querySelector('.app-navbar');
+            if (navbarEl) {
+                new ResizeObserver(updateStickyOffsets).observe(navbarEl);
+            }
         }
+
+        ['navbarContent', 'filterCollapse', 'sectionNavCollapse'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('shown.bs.collapse', updateStickyOffsets);
+            el.addEventListener('hidden.bs.collapse', updateStickyOffsets);
+        });
+
+        // Auto-close the mobile "Navigasi Bagian" hamburger menu after a link is tapped
+        document.addEventListener('click', function (e) {
+            var link = e.target.closest('.section-nav-link');
+            if (!link) return;
+            var nav = document.getElementById('sectionNavCollapse');
+            if (nav && window.innerWidth < 768 && nav.classList.contains('show') && window.bootstrap) {
+                var collapseInstance = window.bootstrap.Collapse.getOrCreateInstance(nav);
+                collapseInstance.hide();
+            }
+        });
     })();
 </script>
 @yield('scripts')

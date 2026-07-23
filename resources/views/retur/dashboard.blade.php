@@ -14,6 +14,14 @@
     {{-- ===================== FILTER ===================== --}}
     <div class="card filter-card sticky-filter mb-4">
         <div class="card-body">
+            <button id="filterToggle" type="button"
+                    class="btn btn-outline-secondary w-100 justify-content-between align-items-center mb-0"
+                    data-bs-toggle="collapse" data-bs-target="#filterCollapse"
+                    aria-expanded="false" aria-controls="filterCollapse">
+                <span><i class="bi bi-funnel-fill me-2"></i>Filter Data</span>
+                <i class="bi bi-list fs-5"></i>
+            </button>
+            <div class="collapse filter-collapse-body mt-3 mt-md-0" id="filterCollapse">
             <form method="GET" action="{{ route('retur.dashboard') }}" class="row g-3 align-items-end">
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">Tanggal Dari</label>
@@ -59,21 +67,31 @@
                     sampai <strong>{{ \Illuminate\Support\Carbon::parse($boundsMax)->translatedFormat('d M Y') }}</strong>.
                 </div>
             @endif
+            </div>
         </div>
     </div>
 
-    <nav class="nav nav-pills flex-nowrap overflow-auto gap-2 mb-4 bg-white p-2 rounded-3 shadow-sm section-nav">
-        <a class="nav-link btn btn-sm btn-outline-primary section-nav-link active" href="#section-summary" data-section="section-summary">Ringkasan</a>
-        <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-trends" data-section="section-trends">Tren Retur, Customer &amp; Code Item</a>
-        <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-status" data-section="section-status">Status Receiving, Delivery &amp; Final</a>
-        <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-top10" data-section="section-top10">Top 10 Customer, Code Item &amp; PIC Delivery</a>
-        <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-detail-data" data-section="section-detail-data">Detail Data</a>
-    </nav>
+    <div class="mb-4 section-nav-wrapper">
+        <button id="sectionNavToggle" type="button"
+                class="btn btn-outline-secondary w-100 justify-content-between align-items-center rounded-3 shadow-sm mb-2"
+                data-bs-toggle="collapse" data-bs-target="#sectionNavCollapse"
+                aria-expanded="false" aria-controls="sectionNavCollapse">
+            <span><i class="bi bi-list-ul me-2"></i>Navigasi Bagian</span>
+            <i class="bi bi-list fs-5"></i>
+        </button>
+        <nav id="sectionNavCollapse" class="nav nav-pills collapse flex-column flex-md-row flex-md-nowrap overflow-auto gap-2 bg-white p-2 rounded-3 shadow-sm section-nav">
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link active" href="#section-summary" data-section="section-summary">Ringkasan</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-trends" data-section="section-trends">Tren Retur, Customer &amp; Code Item</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-status" data-section="section-status">Status Receiving, Delivery &amp; Final</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-top10" data-section="section-top10">Top 10 Customer, Code Item &amp; PIC Delivery</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-detail-data" data-section="section-detail-data">Detail Data</a>
+        </nav>
+    </div>
 
     {{-- ===================== SUMMARY CARDS ===================== --}}
     
     <div class="row g-3 mb-4" id="section-summary">
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-md-4 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -87,7 +105,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-md-4 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -100,7 +118,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-md-4 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -113,7 +131,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-md-4 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -127,7 +145,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-md-4 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -144,7 +162,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-md-4 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -158,7 +176,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-md-4 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -175,7 +193,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-md-4 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -189,7 +207,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-md-4 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -202,7 +220,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-md-4 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -268,19 +286,19 @@
         </div>
         <div class="card-body">
             <div class="row g-4">
-                <div class="col-12 col-lg-4">
+                <div class="col-12 col-md-6 col-lg-4">
                     <h6 class="text-muted small text-uppercase mb-2 text-center">Status Receiving Part</h6>
                     <div class="chart-box" style="position: relative; height: 280px;">
                         <canvas id="chartStatusReceiving"></canvas>
                     </div>
                 </div>
-                <div class="col-12 col-lg-4">
+                <div class="col-12 col-md-6 col-lg-4">
                     <h6 class="text-muted small text-uppercase mb-2 text-center">Status Delivery Part</h6>
                     <div class="chart-box" style="position: relative; height: 280px;">
                         <canvas id="chartStatusDelivery"></canvas>
                     </div>
                 </div>
-                <div class="col-12 col-lg-4">
+                <div class="col-12 col-md-6 col-lg-4">
                     <h6 class="text-muted small text-uppercase mb-2 text-center">Final Status</h6>
                     <div class="chart-box" style="position: relative; height: 280px;">
                         <canvas id="chartFinalStatus"></canvas>
