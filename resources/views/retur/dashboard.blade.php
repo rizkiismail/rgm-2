@@ -13,7 +13,7 @@
 
     {{-- ===================== FILTER ===================== --}}
     <div class="card filter-card sticky-filter mb-4">
-        <div class="card-body">
+        <div class="card-body" style="font-size: 0.80rem;">
             <button id="filterToggle" type="button"
                     class="btn btn-outline-secondary w-100 justify-content-between align-items-center mb-0"
                     data-bs-toggle="collapse" data-bs-target="#filterCollapse"
@@ -25,17 +25,17 @@
             <form method="GET" action="{{ route('retur.dashboard') }}" class="row g-3 align-items-end">
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">Tanggal Dari</label>
-                    <input type="date" name="date_from" class="form-control"
+                    <input type="date" style="font-size: 0.80rem;" name="date_from" class="form-control"
                            value="{{ $filters['date_from'] ?? ($dateFrom?->format('Y-m-d')) }}">
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">Tanggal Sampai</label>
-                    <input type="date" name="date_to" class="form-control"
+                    <input type="date" style="font-size: 0.80rem;" name="date_to" class="form-control"
                            value="{{ $filters['date_to'] ?? ($dateTo?->format('Y-m-d')) }}">
                 </div>
                 <div class="col-6 col-md-3">
                     <label class="form-label small text-muted mb-1">Customer</label>
-                    <select name="customer" class="form-select">
+                    <select name="customer"  class="form-select" style="font-size: 0.80rem;">
                         <option value="">Semua Customer</option>
                         @foreach ($customerOptions as $c)
                             <option value="{{ $c }}" @selected(($filters['customer'] ?? '') === $c)>{{ $c }}</option>
@@ -44,7 +44,7 @@
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">Final Status</label>
-                    <select name="final_status" class="form-select">
+                    <select name="final_status" class="form-select" style="font-size: 0.80rem;">
                         <option value="">Semua Status</option>
                         <option value="CLOSE" @selected(($filters['final_status'] ?? '') === 'CLOSE')>CLOSE</option>
                         <option value="OPEN" @selected(($filters['final_status'] ?? '') === 'OPEN')>OPEN</option>
@@ -52,7 +52,7 @@
                 </div>
                 <div class="col-12 col-md-2">
                     <label class="form-label small text-muted mb-1">Cari (No Retur / Code Item / Part)</label>
-                    <input type="text" name="q" class="form-control" placeholder="Ketik kata kunci..."
+                    <input type="text" style="font-size: 0.80rem;" name="q" class="form-control" placeholder="Ketik kata kunci..."
                            value="{{ $filters['q'] ?? '' }}">
                 </div>
                 <div class="col-12 col-md-1 d-flex gap-2">
@@ -79,7 +79,7 @@
             <span><i class="bi bi-list-ul me-2"></i>Navigasi Bagian</span>
             <i class="bi bi-list fs-5"></i>
         </button>
-        <nav id="sectionNavCollapse" class="nav nav-pills collapse flex-column flex-md-row flex-md-nowrap overflow-auto gap-2 bg-white p-2 rounded-3 shadow-sm section-nav">
+        <nav id="sectionNavCollapse" style="font-size: 0.80rem;" class="nav nav-pills collapse flex-column flex-md-row flex-md-nowrap overflow-auto gap-2 bg-white p-2 rounded-3 shadow-sm section-nav">
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link active" href="#section-summary" data-section="section-summary">Ringkasan</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-trends" data-section="section-trends">Tren Retur, Customer &amp; Code Item</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-status" data-section="section-status">Status Receiving, Delivery &amp; Final</a>
@@ -310,14 +310,14 @@
 
     {{-- ===================== TOP 10 ===================== --}}
 
-    <div class="row g-4 mb-4" id="section-top10">
+    <div class="row g-4 mb-4">
         <div class="col-12 col-xl-4">
-            <div class="card table-card h-100">
+            <div class="card table-card h-100" id="section-top10">
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-people-fill text-primary"></i> Top 10 Customer
                 </div>
                 <div class="table-responsive" style="max-height: 20rem; overflow-x: auto; overflow-y: auto; display: block;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.63rem;">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.55rem;">
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
@@ -363,7 +363,7 @@
                     <i class="bi bi-box-seam text-success"></i> Top 10 Code Item
                 </div>
                 <div class="table-responsive" style="height: 20rem; overflow-x: auto; overflow-y: auto; display: block;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.68rem;">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.538rem;">
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>

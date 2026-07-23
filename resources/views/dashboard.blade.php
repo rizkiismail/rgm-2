@@ -13,7 +13,7 @@
 
     {{-- ===================== FILTER ===================== --}}
     <div class="card filter-card sticky-filter mb-4">
-        <div class="card-body">
+        <div class="card-body" style="font-size: 0.70rem;">
             <button id="filterToggle" type="button"
                     class="btn btn-outline-secondary w-100 justify-content-between align-items-center mb-0"
                     data-bs-toggle="collapse" data-bs-target="#filterCollapse"
@@ -26,17 +26,17 @@
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">Tanggal Dari</label>
                     <input type="date" name="date_from" class="form-control"
-                           value="{{ $filters['date_from'] ?? ($dateFrom?->format('Y-m-d')) }}">
+                           value="{{ $filters['date_from'] ?? ($dateFrom?->format('Y-m-d')) }}" style="font-size: 0.70rem;">
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">Tanggal Sampai</label>
                     <input type="date" name="date_to" class="form-control"
-                           value="{{ $filters['date_to'] ?? ($dateTo?->format('Y-m-d')) }}">
+                           value="{{ $filters['date_to'] ?? ($dateTo?->format('Y-m-d')) }}" style="font-size: 0.70rem;">
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">Customer</label>
-                    <select name="customer" class="form-select">
-                        <option value="">Semua Customer</option>
+                    <select name="customer" class="form-select" style="font-size: 0.70rem;">
+                        <option value="" >Semua Customer</option>
                         @foreach ($customerOptions as $c)
                             <option value="{{ $c->customer }}" @selected(($filters['customer'] ?? '') === $c->customer)>
                                 {{ $c->customer }}{{ $c->line ? ' (Line '.$c->line.')' : '' }}
@@ -46,8 +46,8 @@
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">PIC Verifikator</label>
-                    <select name="pic" class="form-select">
-                        <option value="">Semua PIC</option>
+                    <select name="pic" class="form-select" style="font-size: 0.70rem;">
+                        <option value="" >Semua PIC</option>
                         @foreach ($picOptions as $p)
                             <option value="{{ $p }}" @selected(($filters['pic'] ?? '') === $p)>{{ $p }}</option>
                         @endforeach
@@ -55,8 +55,8 @@
                 </div>
                 <div class="col-6 col-md-1">
                     <label class="form-label small text-muted mb-1">Line</label>
-                    <select name="line" class="form-select">
-                        <option value="">Semua</option>
+                    <select name="line" class="form-select" style="font-size: 0.70rem;">
+                        <option value="" >Semua</option>
                         @foreach ($lineOptions as $l)
                             <option value="{{ $l }}" @selected((string) ($filters['line'] ?? '') === (string) $l)>{{ $l }}</option>
                         @endforeach
@@ -64,7 +64,7 @@
                 </div>
                 <div class="col-12 col-md-2">
                     <label class="form-label small text-muted mb-1">Cari (Code Item / Part / BSTHP / Barcode)</label>
-                    <input type="text" name="q" class="form-control" placeholder="Ketik kata kunci..."
+                    <input type="text" name="q" class="form-control" style="font-size: 0.70rem;" placeholder="Ketik kata kunci..."
                            value="{{ $filters['q'] ?? '' }}">
                 </div>
                 <div class="col-12 col-md-1 d-flex gap-2">
@@ -333,14 +333,14 @@
     </div>
 
     {{-- ===================== TOP 10 CUSTOMER & ITEM ===================== --}}
-    <div class="row g-4 mb-4" id="section-top10">
+    <div class="row g-4 mb-4" >
         <div class="col-12 col-xl-6">
-            <div class="card table-card h-100">
+            <div class="card table-card h-100" id="section-top10">
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-people-fill text-primary"></i> Top 10 Customer
                 </div>
                 <div class="table-responsive" style="height: 385px; overflow-x: auto; overflow-y: auto; display: block;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.63rem;">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.90rem;">
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
@@ -384,7 +384,7 @@
                     <i class="bi bi-box-seam text-success"></i> Top 10 Item
                 </div>
                 <div class="table-responsive" style="height: 385px; overflow-x: auto; overflow-y: auto; display: block;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.63rem;">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.97rem;">
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
@@ -423,7 +423,7 @@
             <span><i class="bi bi-table"></i> Detail Data ({{ number_format($rows->total()) }} baris sesuai filter)</span>
         </div>
         <div class="table-responsive" style="max-height: 65vh;">
-            <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.63rem;">
+            <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.80rem;">
                 <thead class="sticky-th">
                 <tr>
                     <th>No.</th>
