@@ -75,6 +75,7 @@
     </div>
 
     <nav class="nav nav-pills flex-nowrap overflow-auto gap-2 mb-4 bg-white p-2 rounded-3 shadow-sm section-nav">
+        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-summary">Ringkasan</a>
         <a class="nav-link btn btn-sm btn-outline-primary" href="#section-trends">Tren BSTHP Customer &amp; PIC Verifikator</a>
         <a class="nav-link btn btn-sm btn-outline-primary" href="#section-pic-bsthp">Jumlah BSTHP Berdasarkan PIC Verifikator</a>
         <a class="nav-link btn btn-sm btn-outline-primary" href="#section-customer-line">Customer Berdasarkan Line</a>
@@ -83,7 +84,7 @@
     </nav>
 
     {{-- ===================== SUMMARY CARDS ===================== --}}
-    <div class="row g-3 mb-4">
+    <div class="row g-3 mb-4" id="section-summary">
         <div class="col-6 col-lg-2">
             <div class="card stat-card">
                 <div class="card-body">

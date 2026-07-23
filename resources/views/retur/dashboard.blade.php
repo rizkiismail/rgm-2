@@ -63,6 +63,7 @@
     </div>
 
     <nav class="nav nav-pills flex-nowrap overflow-auto gap-2 mb-4 bg-white p-2 rounded-3 shadow-sm section-nav">
+        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-summary">Ringkasan</a>
         <a class="nav-link btn btn-sm btn-outline-primary" href="#section-trends">Tren Retur, Customer &amp; Code Item</a>
         <a class="nav-link btn btn-sm btn-outline-primary" href="#section-status">Status Receiving, Delivery &amp; Final</a>
         <a class="nav-link btn btn-sm btn-outline-primary" href="#section-top10">Top 10 Customer, Code Item &amp; PIC Delivery</a>
@@ -70,10 +71,8 @@
     </nav>
 
     {{-- ===================== SUMMARY CARDS ===================== --}}
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-       
-    </div>
-    <div class="row g-3 mb-4">
+    
+    <div class="row g-3 mb-4" id="section-summary">
         <div class="col-6 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
