@@ -106,9 +106,9 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="text-muted small">Code Item (Unik)</div>
-                            <div class="stat-value text-warning">{{ number_format($totalCodeItem) }}</div>
+                            <div class="stat-value text-success">{{ number_format($totalCodeItem) }}</div>
                         </div>
-                        <i class="bi bi-upc-scan stat-icon text-warning"></i>
+                        <i class="bi bi-upc-scan stat-icon text-success"></i>
                     </div>
                 </div>
             </div>
@@ -119,9 +119,9 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="text-muted small">Total Qty Retur</div>
-                            <div class="stat-value text-dark">{{ number_format((float) $totalQtyRetur) }}</div>
+                            <div class="stat-value text" style="color : #fd7e14">{{ number_format((float) $totalQtyRetur) }}</div>
                         </div>
-                        <i class="bi bi-boxes stat-icon text-dark"></i>
+                        <i class="bi bi-boxes stat-icon text" style="color : #fd7e14"></i>
                     </div>
                     <div class="small text-muted mt-1">{{ number_format($totalRows) }} baris data</div>
                 </div>
@@ -133,9 +133,9 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="text-muted small">Qty Receiving Part</div>
-                            <div class="stat-value text-success">{{ number_format((float) $totalQtyReceivingPart) }}</div>
+                            <div class="stat-value text-info">{{ number_format((float) $totalQtyReceivingPart) }}</div>
                         </div>
-                        <i class="bi bi-box-arrow-in-down stat-icon text-success"></i>
+                        <i class="bi bi-box-arrow-in-down stat-icon text-info"></i>
                     </div>
                     <div class="small mt-1">
                         <span class="badge bg-success">CLOSE {{ number_format($receivingStatusCount['CLOSE']) }}</span>
@@ -181,9 +181,9 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="text-muted small">Qty Pending Delivery Part</div>
-                            <div class="stat-value text-secondary">{{ number_format((float) $totalQtyPendingDeliveryPart) }}</div>
+                            <div class="stat-value text-warning">{{ number_format((float) $totalQtyPendingDeliveryPart) }}</div>
                         </div>
-                        <i class="bi bi-clock-history stat-icon text-secondary"></i>
+                        <i class="bi bi-clock-history stat-icon text-warning"></i>
                     </div>
                     <div class="small text-muted mt-1">Belum selesai delivery</div>
                 </div>
