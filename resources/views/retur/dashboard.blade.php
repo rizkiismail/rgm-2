@@ -150,6 +150,20 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
+                            <div class="text-muted small">Qty Pending Receiving Part</div>
+                            <div class="stat-value text-warning">{{ number_format((float) $totalQtyPendingReceivingPart) }}</div>
+                        </div>
+                        <i class="bi bi-hourglass-split stat-icon text-warning"></i>
+                    </div>
+                    <div class="small text-muted mt-1">Belum selesai receiving</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
                             <div class="text-muted small">Qty Delivery Part</div>
                             <div class="stat-value text-info">{{ number_format((float) $totalQtyDeliveryPart) }}</div>
                         </div>
@@ -159,6 +173,20 @@
                         <span class="badge bg-success">CLOSE {{ number_format($deliveryStatusCount['CLOSE']) }}</span>
                         <span class="badge bg-danger">OPEN {{ number_format($deliveryStatusCount['OPEN']) }}</span>
                     </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="text-muted small">Qty Pending Delivery Part</div>
+                            <div class="stat-value text-secondary">{{ number_format((float) $totalQtyPendingDeliveryPart) }}</div>
+                        </div>
+                        <i class="bi bi-clock-history stat-icon text-secondary"></i>
+                    </div>
+                    <div class="small text-muted mt-1">Belum selesai delivery</div>
                 </div>
             </div>
         </div>

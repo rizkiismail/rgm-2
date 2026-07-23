@@ -21,8 +21,10 @@ class BalanceReturController extends Controller
         $totalRows = $summary['totalRows'];
         $totalQtyRetur = $summary['totalQtyRetur'];
         $totalQtyReceivingPart = $summary['totalQtyReceivingPart'];
+        $totalQtyPendingReceivingPart = $summary['totalQtyPendingReceivingPart'];
         $receivingStatusCount = $summary['receivingStatusCount'];
         $totalQtyDeliveryPart = $summary['totalQtyDeliveryPart'];
+        $totalQtyPendingDeliveryPart = $summary['totalQtyPendingDeliveryPart'];
         $deliveryStatusCount = $summary['deliveryStatusCount'];
         $finalStatusCount = $summary['finalStatusCount'];
 
@@ -126,8 +128,10 @@ class BalanceReturController extends Controller
             'totalRows' => $totalRows,
             'totalQtyRetur' => $totalQtyRetur,
             'totalQtyReceivingPart' => $totalQtyReceivingPart,
+            'totalQtyPendingReceivingPart' => $totalQtyPendingReceivingPart,
             'receivingStatusCount' => $receivingStatusCount,
             'totalQtyDeliveryPart' => $totalQtyDeliveryPart,
+            'totalQtyPendingDeliveryPart' => $totalQtyPendingDeliveryPart,
             'deliveryStatusCount' => $deliveryStatusCount,
             'finalStatusCount' => $finalStatusCount,
             'chartData' => $chartData,
@@ -238,8 +242,10 @@ class BalanceReturController extends Controller
      *
      * @return array{
      *     totalRetur:int, totalCustomer:int, totalCodeItem:int, totalRows:int, totalQtyRetur:float,
-     *     totalQtyReceivingPart:float, receivingStatusCount:array{CLOSE:int,OPEN:int},
-     *     totalQtyDeliveryPart:float, deliveryStatusCount:array{CLOSE:int,OPEN:int},
+     *     totalQtyReceivingPart:float, totalQtyPendingReceivingPart:float,
+     *     receivingStatusCount:array{CLOSE:int,OPEN:int},
+     *     totalQtyDeliveryPart:float, totalQtyPendingDeliveryPart:float,
+     *     deliveryStatusCount:array{CLOSE:int,OPEN:int},
      *     finalStatusCount:array{CLOSE:int,OPEN:int}
      * }
      */
@@ -252,8 +258,10 @@ class BalanceReturController extends Controller
             'totalRows' => (clone $baseQuery)->count(),
             'totalQtyRetur' => (clone $baseQuery)->sum('qty_retur'),
             'totalQtyReceivingPart' => (clone $baseQuery)->sum('qty_receiving_part'),
+            'totalQtyPendingReceivingPart' => (clone $baseQuery)->sum('qty_pending_receiving_part'),
             'receivingStatusCount' => $this->statusBreakdown($baseQuery, 'status_receiving'),
             'totalQtyDeliveryPart' => (clone $baseQuery)->sum('qty_delivery_part'),
+            'totalQtyPendingDeliveryPart' => (clone $baseQuery)->sum('qty_pending_delivery_part'),
             'deliveryStatusCount' => $this->statusBreakdown($baseQuery, 'status_delivery'),
             'finalStatusCount' => $this->statusBreakdown($baseQuery, 'final_status'),
         ];
