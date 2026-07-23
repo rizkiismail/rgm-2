@@ -345,7 +345,7 @@
                     <i class="bi bi-box-seam text-success"></i> Top 10 Code Item
                 </div>
                 <div class="table-responsive" style="height: 20rem; overflow-x: auto; overflow-y: auto; display: block;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.70rem;">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.68rem;">
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
