@@ -75,12 +75,12 @@
     </div>
 
     <nav class="nav nav-pills flex-nowrap overflow-auto gap-2 mb-4 bg-white p-2 rounded-3 shadow-sm section-nav">
-        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-summary">Ringkasan</a>
-        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-trends">Tren BSTHP Customer &amp; PIC Verifikator</a>
-        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-pic-bsthp">Jumlah BSTHP Berdasarkan PIC Verifikator</a>
-        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-customer-line">Customer Berdasarkan Line</a>
-        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-top10">Top 10 Customer &amp; Item</a>
-        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-detail-data">Detail data</a>
+        <a class="nav-link btn btn-sm btn-outline-primary section-nav-link active" href="#section-summary" data-section="section-summary">Ringkasan</a>
+        <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-trends" data-section="section-trends">Tren BSTHP Customer &amp; PIC Verifikator</a>
+        <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-pic-bsthp" data-section="section-pic-bsthp">Jumlah BSTHP Berdasarkan PIC Verifikator</a>
+        <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-customer-line" data-section="section-customer-line">Customer Berdasarkan Line</a>
+        <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-top10" data-section="section-top10">Top 10 Customer &amp; Item</a>
+        <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" data-section="section-detail-data" href="#section-detail-data">Detail data</a>
     </nav>
 
     {{-- ===================== SUMMARY CARDS ===================== --}}
@@ -425,7 +425,7 @@
                 <tbody>
                 @forelse ($rows as $row)
                     <tr>
-                        <td class="text-center">{{ $rows->firstItem() + $loop->index }}</td>
+                        <td class="text-center">{{ $loop->iteration }}</td>
                         <td class="text-nowrap">{{ $row->date_income?->format('d-m-Y H:i') }}</td>
                         <td class="text-nowrap">{{ $row->bsthp_no }}</td>
                         <td>{{ $row->verify_by }}</td>
@@ -717,6 +717,32 @@
                 },
             });
         }
+
+        document.querySelectorAll('.section-nav-link').forEach((link) => {
+            link.addEventListener('click', () => {
+                document.querySelectorAll('.section-nav-link').forEach((item) => {
+                    item.classList.remove('active', 'btn-primary');
+                    item.classList.add('btn-outline-primary');
+                });
+                link.classList.remove('btn-outline-primary');
+                link.classList.add('active', 'btn-primary');
+            });
+        });
+
+        const sectionLinks = Array.from(document.querySelectorAll('.section-nav-link'));
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                sectionLinks.forEach((link) => {
+                    const isActive = link.dataset.section === entry.target.id;
+                    link.classList.toggle('active', isActive);
+                    link.classList.toggle('btn-primary', isActive);
+                    link.classList.toggle('btn-outline-primary', !isActive);
+                });
+            });
+        }, { rootMargin: '-30% 0px -55% 0px', threshold: 0.1 });
+
+        document.querySelectorAll('[id^="section-"]').forEach((section) => sectionObserver.observe(section));
 
         document.querySelectorAll('#chartPeriodToggle button').forEach((btn) => {
             btn.addEventListener('click', () => {

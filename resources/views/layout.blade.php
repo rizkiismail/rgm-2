@@ -215,7 +215,7 @@
                     </li>
                 </ul>
             </div>
-            <a href="{{ route('import.form') }}" class="btn btn-sm {{ request()->routeIs('import.form') ? 'btn-light' : 'btn-outline-light' }}"><i class="bi bi-upload"></i> Upload Receiving</a>
+            <a href="{{ route('import.form') }}" class="btn btn-sm {{ request()->routeIs('import.form') ? 'btn-secondary' : 'btn-outline-light' }}"><i class="bi bi-upload"></i> Upload Receiving</a>
             <a href="{{ route('retur.import.form') }}" class="btn btn-sm {{ request()->routeIs('retur.import.form') ? 'btn-warning' : 'btn-outline-warning' }}"><i class="bi bi-upload"></i> Upload Retur</a>
         </div>
     </div>
