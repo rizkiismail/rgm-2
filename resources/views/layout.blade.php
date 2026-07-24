@@ -304,12 +304,12 @@
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
                             <a class="dropdown-item {{ request()->routeIs('import.form') ? 'active' : '' }}" href="{{ route('import.form') }}">
-                                <i class="bi bi-upload"></i> Upload Receiving
+                                <i class="bi bi-folder2 me-2"></i> Upload Receiving
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item {{ request()->routeIs('retur.import.form') ? 'active' : '' }}" href="{{ route('retur.import.form') }}">
-                                <i class="bi bi-upload"></i> Upload Retur
+                                <i class="bi bi-arrow-return-left me-2"></i> Upload Retur
                             </a>
                         </li>
                         <li>
