@@ -339,8 +339,8 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-people-fill text-primary"></i> Top 10 Customer
                 </div>
-                <div class="table-responsive" style="height: 385px; overflow-x: auto; overflow-y: auto; display: block;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.90rem;">
+                <div class="table-responsive" style="height: 385px; overflow-x: auto; overflow-y: auto; display: block; ">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle">
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
@@ -383,8 +383,8 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-box-seam text-success"></i> Top 10 Item
                 </div>
-                <div class="table-responsive" style="height: 385px; overflow-x: auto; overflow-y: auto; display: block;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.97rem;">
+                <div class="table-responsive" style="height: 385px; overflow-x: auto; overflow-y: auto; display: block; ">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle" >
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
@@ -423,7 +423,7 @@
             <span><i class="bi bi-table"></i> Detail Data ({{ number_format($rows->total()) }} baris sesuai filter)</span>
         </div>
         <div class="table-responsive" style="max-height: 65vh;">
-            <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.80rem;">
+            <table class="table table-sm table-hover table-striped mb-0 align-middle" >
                 <thead class="sticky-th">
                 <tr>
                     <th>No.</th>

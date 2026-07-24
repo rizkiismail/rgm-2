@@ -344,8 +344,8 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-people-fill text-primary"></i> Top 10 Customer
                 </div>
-                <div class="table-responsive" style="max-height: 20rem; overflow-x: auto; overflow-y: auto; display: block;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.55rem;">
+                <div class="table-responsive" style="max-height: 20rem; overflow-x: auto; overflow-y: auto; display: block; font-size: 0.55rem;">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle">
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
@@ -390,8 +390,8 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-box-seam text-success"></i> Top 10 Code Item
                 </div>
-                <div class="table-responsive" style="height: 20rem; overflow-x: auto; overflow-y: auto; display: block;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.538rem;">
+                <div class="table-responsive" style="height: 20rem; font-size: 0.5386rem; overflow-x: auto; overflow-y: auto; display: block;">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle" >
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
@@ -429,13 +429,13 @@
             </div>
         </div>
 
-        <div class="col-12 col-xl-4">
+        <div class="col-12 col-xl-4" >
             <div class="card table-card h-100">
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-person-badge-fill text-info"></i> Top 10 PIC PPIC Delivery
                 </div>
-                <div class="table-responsive" style="height: 20rem; overflow-x: auto; overflow-y: auto; display: block;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style="font-size: 0.70rem;">
+                <div class="table-responsive" style="height: 20rem; overflow-x: auto; overflow-y: auto; display: block; font-size: 0.70rem;">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle" >
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
@@ -482,16 +482,21 @@
                 <i class="bi bi-file-earmark-excel-fill"></i> Export Excel
             </a>
         </div>
-        <div class="table-responsive" style="max-height: 65vh; font-size: 0.70rem;">
+        <div class="table-responsive" style="max-height: 65vh; font-size: 0.50rem;">
             <table class="table table-sm table-hover table-striped mb-0 align-middle">
                 <thead class="sticky-th">
                 <tr>
                     <th>No.</th>
                     <th>Tanggal Retur</th>
                     <th>No. Retur</th>
+                    <th>No. Revisi</th>
+                    <th>No. From Customer</th>
                     <th>Customer</th>
                     <th>Code Item</th>
+                    <th>Part Nomer</th>
                     <th>Part Name</th>
+                    <th>Model</th>
+                    <th>Product Status</th>
                     <th class="text-end">Qty Retur</th>
                     <th>Unit</th>
                     <th class="text-end">Qty Receiving</th>
@@ -500,6 +505,7 @@
                     <th class="text-end">Qty Delivery</th>
                     <th class="text-end">Qty Pending Delivery</th>
                     <th class="text-center">Status Delivery</th>
+                    <th class="text-center">Stock Realtime</th>
                     <th class="text-center">Final Status</th>
                     <th class="text-center">Note</th>
                     <th>PIC PPIC Delivery</th>
@@ -511,9 +517,14 @@
                         <td class="text-center">{{ $rows->firstItem() + $loop->index }}</td>
                         <td class="text-nowrap">{{ $row->date_retur?->format('d-m-Y') }}</td>
                         <td class="text-nowrap">{{ $row->no_retur }}</td>
+                        <td>{{ $row->rev_no }}</td>
+                        <td class="text-nowrap">{{ $row->no_from_customer }}</td>
                         <td>{{ $row->customer_name }}</td>
                         <td>{{ $row->code_item }}</td>
+                        <td>{{ $row->part_no }}</td>
                         <td>{{ $row->part_name }}</td>
+                        <td>{{ $row->model }}</td>
+                        <td>{{ $row->product_status }}</td>
                         <td class="text-end">{{ number_format((float) $row->qty_retur) }}</td>
                         <td>{{ $row->unit }}</td>
                         <td class="text-end">{{ number_format((float) $row->qty_receiving_part) }}</td>
@@ -538,6 +549,7 @@
                                 <span class="text-muted small">-</span>
                             @endif
                         </td>
+                        <td>{{ $row->stock_realtime ?? '-' }}</td>
                         <td class="text-center">
                             @if ($row->final_status === 'CLOSE')
                                 <span class="badge bg-success">CLOSE</span>

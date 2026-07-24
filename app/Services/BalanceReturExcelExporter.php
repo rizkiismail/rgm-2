@@ -175,15 +175,15 @@ class BalanceReturExcelExporter
         $sheet->setTitle('Detail Data');
 
         $headers = [
-            'Tanggal Retur', 'No. Retur', 'Customer', 'Code Item', 'Part Name',
+            'Tanggal Retur', 'No. Retur','Rev. No.','No. From Customer', 'Customer', 'Code Item', 'Part No.', 'Part Name','Model','Product Status',
             'Qty Retur', 'Unit', 'Qty Receiving','Qty Pending Receiving', 'Status Receiving',
-            'Qty Delivery','Qty Pending Delivery', 'Status Delivery', 'Final Status', 'Note', 'PIC PPIC Delivery',
+            'Qty Delivery','Qty Pending Delivery', 'Status Delivery','Stock Realtime','Final Status','Note', 'PIC PPIC Delivery',
         ];
 
         $sheet->fromArray($headers, null, 'A1');
-        $sheet->getStyle('A1:P1')->getFont()->setBold(true)->getColor()->setRGB('FFFFFF');
-        $sheet->getStyle('A1:P1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB(self::HEADER_FILL);
-        $sheet->getStyle('A1:P1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A1:V1')->getFont()->setBold(true)->getColor()->setRGB('FFFFFF');
+        $sheet->getStyle('A1:V1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB(self::HEADER_FILL);
+        $sheet->getStyle('A1:V1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->freezePane('A2');
 
         $rowIndex = 2;
@@ -191,27 +191,34 @@ class BalanceReturExcelExporter
             $sheet->fromArray([
                 $item->date_retur?->format('d-m-Y'),
                 $item->no_retur,
+                $item->rev_no,
+                $item->no_from_customer,
                 $item->customer_name,
                 $item->code_item,
+                $item->part_no,
                 $item->part_name,
-                null,
+                $item->model,
+                $item->product_status,
+                $item->qty_retur,
                 $item->unit,
-                null,
-                null,
+                $item->qty_receiving_part,
+                $item->qty_pending_receiving_part,
                 $item->status_receiving,
-                null,
-                null,
+                $item->qty_delivery_part,
+                $item->qty_pending_delivery_part,
                 $item->status_delivery,
+                $item->stock_realtime,
                 $item->final_status,
                 $item->note,
                 $item->pic_ppic_delivery,
             ], null, "A{$rowIndex}");
 
-            $sheet->setCellValueExplicit("F{$rowIndex}", $this->normalizeNumericValue($item->qty_retur), DataType::TYPE_NUMERIC);
-            $sheet->setCellValueExplicit("H{$rowIndex}", $this->normalizeNumericValue($item->qty_receiving_part), DataType::TYPE_NUMERIC);
-            $sheet->setCellValueExplicit("I{$rowIndex}", $this->normalizeNumericValue($item->qty_pending_receiving_part), DataType::TYPE_NUMERIC);
-            $sheet->setCellValueExplicit("K{$rowIndex}", $this->normalizeNumericValue($item->qty_delivery_part), DataType::TYPE_NUMERIC);
-            $sheet->setCellValueExplicit("L{$rowIndex}", $this->normalizeNumericValue($item->qty_pending_delivery_part), DataType::TYPE_NUMERIC);
+            $sheet->setCellValueExplicit("K{$rowIndex}", $this->normalizeNumericValue($item->qty_retur), DataType::TYPE_NUMERIC);
+            $sheet->setCellValueExplicit("M{$rowIndex}", $this->normalizeNumericValue($item->qty_receiving_part), DataType::TYPE_NUMERIC);
+            $sheet->setCellValueExplicit("N{$rowIndex}", $this->normalizeNumericValue($item->qty_pending_receiving_part), DataType::TYPE_NUMERIC);
+            $sheet->setCellValueExplicit("P{$rowIndex}", $this->normalizeNumericValue($item->qty_delivery_part), DataType::TYPE_NUMERIC);
+            $sheet->setCellValueExplicit("Q{$rowIndex}", $this->normalizeNumericValue($item->qty_pending_delivery_part), DataType::TYPE_NUMERIC);
+            $sheet->setCellValueExplicit("S{$rowIndex}", $this->normalizeNumericValue($item->stock_realtime), DataType::TYPE_NUMERIC);
 
             $rowIndex++;
         }
@@ -219,18 +226,18 @@ class BalanceReturExcelExporter
         $lastRow = max($rowIndex - 1, 1);
 
         // Format angka untuk kolom qty.
-        foreach (['F', 'H', 'I','K','L'] as $col) {
+        foreach (['K', 'M', 'N','P','Q','S'] as $col) {
             $sheet->getStyle("{$col}2:{$col}{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
         }
 
         // Lebar kolom otomatis menyesuaikan isi.
-        foreach (range('A', 'P') as $col) {
+        foreach (range('A', 'W') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
         // Garis border tipis untuk seluruh tabel supaya rapi saat dicetak.
         if ($lastRow >= 1) {
-            $sheet->getStyle("A1:P{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->getStyle("A1:W{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
         }
     }
 }

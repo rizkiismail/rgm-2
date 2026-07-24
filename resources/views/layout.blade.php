@@ -205,6 +205,7 @@
             .btn-sm { font-size: .78rem; padding: .3rem .55rem; }
             .form-label.small { font-size: .72rem; }
             h6.small { font-size: .68rem; }
+            .table-responsive { font-size : 0.50rem}
         }
 
         /* ===== Responsive navbar / hamburger menus ===== */
@@ -247,6 +248,8 @@
             .section-nav.collapse { display: flex !important; height: auto !important; }
         }
         .section-nav.flex-column .nav-link { text-align: left; width: 100%; }
+
+
     </style>
 </head>
 <body>
