@@ -90,7 +90,7 @@
 
     {{-- ===================== SUMMARY CARDS ===================== --}}
     
-    <div class="row g-3 mb-4" id="section-summary">
+    <div class="row g-2 mb-3" id="section-summary">
         <div class="col-6 col-md-4 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
@@ -454,7 +454,7 @@
                 <i class="bi bi-file-earmark-excel-fill"></i> Export Excel
             </a>
         </div>
-        <div class="table-responsive" style="max-height: 65vh;">
+        <div class="table-responsive" style="max-height: 65vh; font-size: 0.70rem;">
             <table class="table table-sm table-hover table-striped mb-0 align-middle">
                 <thead class="sticky-th">
                 <tr>
