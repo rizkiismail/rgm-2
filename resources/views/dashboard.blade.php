@@ -13,7 +13,7 @@
 
     {{-- ===================== FILTER ===================== --}}
     <div class="card filter-card sticky-filter mb-4">
-        <div class="card-body" style="font-size: 0.70rem;">
+        <div class="card-body" style="font-size: 0.80rem;">
             <button id="filterToggle" type="button"
                     class="btn btn-outline-secondary w-100 justify-content-between align-items-center mb-0"
                     data-bs-toggle="collapse" data-bs-target="#filterCollapse"
@@ -26,16 +26,16 @@
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">Tanggal Dari</label>
                     <input type="date" name="date_from" class="form-control"
-                           value="{{ $filters['date_from'] ?? ($dateFrom?->format('Y-m-d')) }}" style="font-size: 0.70rem;">
+                           value="{{ $filters['date_from'] ?? ($dateFrom?->format('Y-m-d')) }}" style="font-size: 0.80rem;">
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">Tanggal Sampai</label>
                     <input type="date" name="date_to" class="form-control"
-                           value="{{ $filters['date_to'] ?? ($dateTo?->format('Y-m-d')) }}" style="font-size: 0.70rem;">
+                           value="{{ $filters['date_to'] ?? ($dateTo?->format('Y-m-d')) }}" style="font-size: 0.80rem;">
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">Customer</label>
-                    <select name="customer" class="form-select" style="font-size: 0.70rem;">
+                    <select name="customer" class="form-select" style="font-size: 0.80rem;">
                         <option value="" >Semua Customer</option>
                         @foreach ($customerOptions as $c)
                             <option value="{{ $c->customer }}" @selected(($filters['customer'] ?? '') === $c->customer)>
@@ -46,7 +46,7 @@
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">PIC Verifikator</label>
-                    <select name="pic" class="form-select" style="font-size: 0.70rem;">
+                    <select name="pic" class="form-select" style="font-size: 0.80rem;">
                         <option value="" >Semua PIC</option>
                         @foreach ($picOptions as $p)
                             <option value="{{ $p }}" @selected(($filters['pic'] ?? '') === $p)>{{ $p }}</option>
@@ -55,7 +55,7 @@
                 </div>
                 <div class="col-6 col-md-1">
                     <label class="form-label small text-muted mb-1">Line</label>
-                    <select name="line" class="form-select" style="font-size: 0.70rem;">
+                    <select name="line" class="form-select" style="font-size: 0.80rem;">
                         <option value="" >Semua</option>
                         @foreach ($lineOptions as $l)
                             <option value="{{ $l }}" @selected((string) ($filters['line'] ?? '') === (string) $l)>{{ $l }}</option>
@@ -64,7 +64,7 @@
                 </div>
                 <div class="col-12 col-md-2">
                     <label class="form-label small text-muted mb-1">Cari (Code Item / Part / BSTHP / Barcode)</label>
-                    <input type="text" name="q" class="form-control" style="font-size: 0.70rem;" placeholder="Ketik kata kunci..."
+                    <input type="text" name="q" class="form-control" style="font-size: 0.80rem;" placeholder="Ketik kata kunci..."
                            value="{{ $filters['q'] ?? '' }}">
                 </div>
                 <div class="col-12 col-md-1 d-flex gap-2">

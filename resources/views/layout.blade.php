@@ -257,7 +257,13 @@
     <div class="container-fluid px-3 px-md-4">
         <a class="navbar-brand" href="{{ route('dashboard') }}">
             <i class="bi bi-box-seam-fill me-1"></i>
-            {{ request()->routeIs('retur.dashboard') ? 'Monitoring Balance Retur' : 'Monitoring Receiving Goods' }}
+            @if (request()->routeIs('retur.dashboard'))
+                Monitoring Balance Retur
+            @elseif (request()->routeIs('scanout.dashboard'))
+                Monitoring Raking Scan Out
+            @else
+                Monitoring Receiving Goods
+            @endif
         </a>
         <button type="button" id="themeToggle" class="btn btn-sm btn-outline-light order-lg-2 ms-auto ms-lg-0 me-2" aria-pressed="false" title="Ubah tema">
             <i class="bi bi-moon-stars-fill"></i>
@@ -270,7 +276,7 @@
             <span class="navbar-text text-white-50 d-block d-lg-inline mt-2 mt-lg-0">PT Karya Putra Sangkuriang &mdash; Dept Warehouse</span>
             <div class="d-flex flex-column flex-lg-row flex-wrap gap-2 ms-lg-auto align-items-stretch align-items-lg-center mt-3 mt-lg-0">
                 <div class="btn-group">
-                    <button type="button" class="btn btn-sm {{ request()->routeIs(['dashboard', 'retur.dashboard']) ? 'btn-primary' : 'btn-outline-light' }} dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button type="button" class="btn btn-sm {{ request()->routeIs(['dashboard', 'retur.dashboard', 'scanout.dashboard']) ? 'btn-primary' : 'btn-outline-light' }} dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-speedometer2"></i> Dashboard
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -284,10 +290,16 @@
                                 <i class="bi bi-arrow-return-left me-2"></i> Balance Retur
                             </a>
                         </li>
+                        <li>
+                            <a class="dropdown-item {{ request()->routeIs('scanout.dashboard') ? 'active' : '' }}" href="{{ route('scanout.dashboard') }}">
+                                <i class="bi bi-upc-scan me-2"></i> Raking Scan Out
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 <a href="{{ route('import.form') }}" class="btn btn-sm {{ request()->routeIs('import.form') ? 'btn-secondary' : 'btn-outline-light' }}"><i class="bi bi-upload"></i> Upload Receiving</a>
                 <a href="{{ route('retur.import.form') }}" class="btn btn-sm {{ request()->routeIs('retur.import.form') ? 'btn-warning' : 'btn-outline-warning' }}"><i class="bi bi-upload"></i> Upload Retur</a>
+                <a href="{{ route('scanout.import.form') }}" class="btn btn-sm {{ request()->routeIs('scanout.import.form') ? 'btn-info' : 'btn-outline-info' }}"><i class="bi bi-upload"></i> Upload Scan Out</a>
             </div>
         </div>
     </div>
