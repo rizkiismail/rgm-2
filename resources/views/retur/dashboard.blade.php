@@ -90,7 +90,7 @@
 
     {{-- ===================== SUMMARY CARDS ===================== --}}
     
-    <div class="row g-2 mb-3" id="section-summary">
+    <div class="row g-2 mb-4" id="section-summary">
         <div class="col-6 col-md-4 col-lg-3">
             <div class="card stat-card">
                 <div class="card-body">
@@ -230,6 +230,34 @@
                         </div>
                         <i class="bi bi-exclamation-circle-fill stat-icon text-danger"></i>
                     </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="text-muted small">Persentase Qty receiving Part</div>
+                            <div class="stat-value text-info">{{ number_format($receivingPercentage, 2, ',', '.') }}%</div>
+                        </div>
+                        <i class="bi bi-box-arrow-in-down stat-icon text-info"></i>
+                    </div>
+                    <div class="small text-muted mt-1">dari Total Qty Retur</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="text-muted small">Persentase Qty Delivery Part</div>
+                            <div class="stat-value text-info">{{ number_format($deliveryPercentage, 2, ',', '.') }}%</div>
+                        </div>
+                        <i class="bi bi-box-arrow-up stat-icon text-info"></i>
+                    </div>
+                    <div class="small text-muted mt-1">dari Total Qty Retur</div>
                 </div>
             </div>
         </div>

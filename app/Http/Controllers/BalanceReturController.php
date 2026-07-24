@@ -27,6 +27,8 @@ class BalanceReturController extends Controller
         $totalQtyPendingDeliveryPart = $summary['totalQtyPendingDeliveryPart'];
         $deliveryStatusCount = $summary['deliveryStatusCount'];
         $finalStatusCount = $summary['finalStatusCount'];
+        $receivingPercentage = (float) ($totalQtyRetur > 0 ? ($totalQtyReceivingPart / $totalQtyRetur) * 100 : 0);
+        $deliveryPercentage = (float) ($totalQtyRetur > 0 ? ($totalQtyDeliveryPart / $totalQtyRetur) * 100 : 0);
 
         // ===================== GRAFIK TREN (Harian/Bulanan/Tahunan) =====================
         $chartData = [
@@ -134,6 +136,8 @@ class BalanceReturController extends Controller
             'totalQtyPendingDeliveryPart' => $totalQtyPendingDeliveryPart,
             'deliveryStatusCount' => $deliveryStatusCount,
             'finalStatusCount' => $finalStatusCount,
+            'receivingPercentage' => $receivingPercentage,
+            'deliveryPercentage' => $deliveryPercentage,
             'chartData' => $chartData,
             'statusChartData' => $statusChartData,
             'topCustomers' => $topCustomers,
