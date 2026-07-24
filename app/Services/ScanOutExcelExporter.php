@@ -74,6 +74,7 @@ class ScanOutExcelExporter
             'Customer' => $filtersMeta['customer'] ?: 'Semua Customer',
             'Outgoing Type' => $filtersMeta['outgoing_type'] ?: 'Semua Tipe',
             'PIC Scan' => $filtersMeta['pic'] ?: 'Semua PIC',
+            'Line' => $filtersMeta['line'] ?: 'Semua Line',
             'Kata Kunci' => $filtersMeta['q'] ?: '-',
             'Waktu Export' => now()->format('d-m-Y H:i').' WIB',
         ];
@@ -153,21 +154,27 @@ class ScanOutExcelExporter
         $sheet->setTitle('Detail Data');
 
         $headers = [
-            'Tanggal Scan', 'Row/Lokasi', 'Customer', 'Code Item', 'Part No.', 'Part Name', 'Model',
+            'Tanggal Scan', 'Row/Lokasi', 'Line', 'Customer', 'Code Item', 'Part No.', 'Part Name', 'Model',
             'Barcode', 'NIK Scan', 'PIC Scan', 'Outgoing No', 'Customer To', 'Outgoing Type', 'Qty', 'Unit',
         ];
 
         $sheet->fromArray($headers, null, 'A1');
-        $sheet->getStyle('A1:O1')->getFont()->setBold(true)->getColor()->setRGB('FFFFFF');
-        $sheet->getStyle('A1:O1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB(self::HEADER_FILL);
-        $sheet->getStyle('A1:O1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A1:P1')->getFont()->setBold(true)->getColor()->setRGB('FFFFFF');
+        $sheet->getStyle('A1:P1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB(self::HEADER_FILL);
+        $sheet->getStyle('A1:P1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->freezePane('A2');
+
+        // Peta row_location => label Line, dari tabel master `row_locations`
+        // (hasil import Row_Location.xlsx), supaya kolom Line konsisten dengan dashboard.
+        $lineByRowLocation = \Illuminate\Support\Facades\DB::table('row_locations')
+            ->pluck('line_label', 'row_location');
 
         $rowIndex = 2;
         foreach ($rows as $item) {
             $sheet->fromArray([
                 $item->scan_date?->format('d-m-Y H:i:s'),
                 $item->row_location,
+                $item->row_location ? ($lineByRowLocation[$item->row_location] ?? '-') : '-',
                 $item->customer_name,
                 $item->code_item,
                 $item->part_no,
@@ -183,21 +190,21 @@ class ScanOutExcelExporter
                 $item->unit,
             ], null, "A{$rowIndex}");
 
-            $sheet->setCellValueExplicit("N{$rowIndex}", $this->normalizeNumericValue($item->qty), DataType::TYPE_NUMERIC);
+            $sheet->setCellValueExplicit("O{$rowIndex}", $this->normalizeNumericValue($item->qty), DataType::TYPE_NUMERIC);
 
             $rowIndex++;
         }
 
         $lastRow = max($rowIndex - 1, 1);
 
-        $sheet->getStyle("N2:N{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("O2:O{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
 
-        foreach (range('A', 'O') as $col) {
+        foreach (range('A', 'P') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
         if ($lastRow >= 1) {
-            $sheet->getStyle("A1:O{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->getStyle("A1:P{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
         }
     }
 }

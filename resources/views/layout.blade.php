@@ -297,9 +297,29 @@
                         </li>
                     </ul>
                 </div>
-                <a href="{{ route('import.form') }}" class="btn btn-sm {{ request()->routeIs('import.form') ? 'btn-secondary' : 'btn-outline-light' }}"><i class="bi bi-upload"></i> Upload Receiving</a>
-                <a href="{{ route('retur.import.form') }}" class="btn btn-sm {{ request()->routeIs('retur.import.form') ? 'btn-warning' : 'btn-outline-warning' }}"><i class="bi bi-upload"></i> Upload Retur</a>
-                <a href="{{ route('scanout.import.form') }}" class="btn btn-sm {{ request()->routeIs('scanout.import.form') ? 'btn-info' : 'btn-outline-info' }}"><i class="bi bi-upload"></i> Upload Scan Out</a>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm {{ request()->routeIs(['import.form', 'retur.import.form', 'scanout.import.form']) ? 'btn-warning' : 'btn-outline-light' }} dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-upload"></i> Upload Data
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item {{ request()->routeIs('import.form') ? 'active' : '' }}" href="{{ route('import.form') }}">
+                                <i class="bi bi-upload"></i> Upload Receiving
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item {{ request()->routeIs('retur.import.form') ? 'active' : '' }}" href="{{ route('retur.import.form') }}">
+                                <i class="bi bi-upload"></i> Upload Retur
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item {{ request()->routeIs('scanout.import.form') ? 'active' : '' }}" href="{{ route('scanout.import.form') }}">
+                                <i class="bi bi-upc-scan me-2"></i> Upload Scan Out
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
             </div>
         </div>
     </div>

@@ -41,4 +41,12 @@ class ScanOut extends Model
     {
         return $this->belongsTo(Customer::class, 'customer_name', 'name');
     }
+
+    /**
+     * Data master Row Location & Line yang cocok dengan kolom `row_location` di sini.
+     */
+    public function rowLocationMaster()
+    {
+        return $this->belongsTo(RowLocation::class, 'row_location', 'row_location');
+    }
 }

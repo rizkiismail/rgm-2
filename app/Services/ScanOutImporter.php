@@ -34,6 +34,7 @@ class ScanOutImporter
         'unit',
     ];
 
+
     /**
      * Import file (.xlsx/.xls) "Monitoring Raking Scan Out" ke tabel scan_outs.
      *

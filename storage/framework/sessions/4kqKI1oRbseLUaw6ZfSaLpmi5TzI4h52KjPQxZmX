@@ -1,1 +1,1 @@
-a:3:{s:6:"_token";s:40:"jTB9ppWzwR85cS7nlFzeJe2HnLo11aFLgRT05nWY";s:9:"_previous";a:2:{s:3:"url";s:102:"http://127.0.0.1:8000/scanout?customer=&date_from=2026-07-01&date_to=2026-07-02&outgoing_type=&pic=&q=";s:5:"route";s:17:"scanout.dashboard";}s:6:"_flash";a:2:{s:3:"old";a:0:{}s:3:"new";a:0:{}}}
+a:3:{s:6:"_token";s:40:"pwO0EzpiHeP9CChf2dDKhyv7X2Fq4t0JXacKjBxa";s:9:"_previous";a:2:{s:3:"url";s:29:"http://127.0.0.1:8000/scanout";s:5:"route";s:17:"scanout.dashboard";}s:6:"_flash";a:2:{s:3:"old";a:0:{}s:3:"new";a:0:{}}}

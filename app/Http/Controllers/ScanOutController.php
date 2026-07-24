@@ -57,23 +57,26 @@ class ScanOutController extends Controller
             'values' => $picScan->pluck('jumlah_scan')->map(fn ($v) => (int) $v)->all(),
         ];
 
-        // ===================== SCAN OUT BERDASARKAN ROW LOCATION =====================
-        $rowLocationBreakdown = (clone $baseQuery)
-            ->whereNotNull('row_location')
+        // ===================== SCAN OUT BERDASARKAN LINE (PIE CHART) =====================
+        // Line didapat dengan mencocokkan row_location terhadap tabel master `row_locations`
+        // (hasil import Row_Location.xlsx), sama seperti Customer dicocokkan ke Line lewat
+        // tabel `customers`. Baris tanpa Row Location yang cocok masuk ke kelompok "Belum Terpetakan".
+        $lineBreakdown = (clone $baseQuery)
+            ->leftJoin('row_locations', 'row_locations.row_location', '=', 'scan_outs.row_location')
             ->select(
-                'row_location',
+                DB::raw("COALESCE(row_locations.line_label, 'Belum Terpetakan') as line_label"),
+                DB::raw('COALESCE(row_locations.line, 99) as line_sort'),
                 DB::raw('COUNT(*) as jumlah_scan'),
-                DB::raw('COUNT(DISTINCT barcode) as jumlah_barcode'),
-                DB::raw('COALESCE(SUM(qty), 0) as total_qty')
+                DB::raw('COUNT(DISTINCT scan_outs.barcode) as jumlah_barcode'),
+                DB::raw('COALESCE(SUM(scan_outs.qty), 0) as total_qty')
             )
-            ->groupBy('row_location')
-            ->orderByDesc('jumlah_scan')
-            ->orderBy('row_location')
+            ->groupBy('line_label', 'line_sort')
+            ->orderBy('line_sort')
             ->get();
 
-        $rowLocationChartData = [
-            'labels' => $rowLocationBreakdown->pluck('row_location')->all(),
-            'values' => $rowLocationBreakdown->pluck('jumlah_scan')->map(fn ($v) => (int) $v)->all(),
+        $lineChartData = [
+            'labels' => $lineBreakdown->pluck('line_label')->all(),
+            'values' => $lineBreakdown->pluck('jumlah_scan')->map(fn ($v) => (int) $v)->all(),
         ];
 
         // ===================== TOP 10 CUSTOMER & CODE ITEM =====================
@@ -119,9 +122,10 @@ class ScanOutController extends Controller
         $customerOptions = ScanOut::whereNotNull('customer_name')->distinct()->orderBy('customer_name')->pluck('customer_name');
         $outgoingTypeOptions = ScanOut::whereNotNull('outgoing_type')->distinct()->orderBy('outgoing_type')->pluck('outgoing_type');
         $picOptions = ScanOut::whereNotNull('scan_by_name')->distinct()->orderBy('scan_by_name')->pluck('scan_by_name');
+        $lineOptions = DB::table('row_locations')->whereNotNull('line_label')->distinct()->orderBy('line')->pluck('line_label');
 
         // Tabel detail dengan pencarian sederhana + pagination.
-        $rows = (clone $baseQuery)->orderByDesc('scan_date')->paginate(25)->withQueryString();
+        $rows = (clone $baseQuery)->with('rowLocationMaster')->orderByDesc('scan_date')->paginate(25)->withQueryString();
 
         $exportUrl = route('scanout.export', array_filter([
             'date_from' => $dateFrom?->format('Y-m-d'),
@@ -129,6 +133,7 @@ class ScanOutController extends Controller
             'customer' => $request->customer,
             'outgoing_type' => $request->outgoing_type,
             'pic' => $request->pic,
+            'line' => $request->line,
             'q' => $request->q,
         ]));
 
@@ -149,7 +154,7 @@ class ScanOutController extends Controller
             'outgoingTypeChartData' => $outgoingTypeChartData,
             'picScan' => $picScan,
             'picScanChartData' => $picScanChartData,
-            'rowLocationChartData' => $rowLocationChartData,
+            'lineChartData' => $lineChartData,
             'topCustomers' => $topCustomers,
             'topCodeItems' => $topCodeItems,
             'topCustomerChartData' => $topCustomerChartData,
@@ -157,8 +162,9 @@ class ScanOutController extends Controller
             'customerOptions' => $customerOptions,
             'outgoingTypeOptions' => $outgoingTypeOptions,
             'picOptions' => $picOptions,
+            'lineOptions' => $lineOptions,
             'rows' => $rows,
-            'filters' => $request->only(['date_from', 'date_to', 'customer', 'outgoing_type', 'pic', 'q']),
+            'filters' => $request->only(['date_from', 'date_to', 'customer', 'outgoing_type', 'pic', 'line', 'q']),
             'hasData' => ScanOut::query()->exists(),
             'exportUrl' => $exportUrl,
         ]);
@@ -182,6 +188,7 @@ class ScanOutController extends Controller
             'customer' => $request->customer,
             'outgoing_type' => $request->outgoing_type,
             'pic' => $request->pic,
+            'line' => $request->line,
             'q' => $request->q,
         ];
 
@@ -205,6 +212,7 @@ class ScanOutController extends Controller
             'customer' => ['nullable', 'string'],
             'outgoing_type' => ['nullable', 'string'],
             'pic' => ['nullable', 'string'],
+            'line' => ['nullable', 'string'],
             'q' => ['nullable', 'string'],
         ]);
 
@@ -235,6 +243,12 @@ class ScanOutController extends Controller
         }
         if ($request->filled('pic')) {
             $baseQuery->where('scan_by_name', $request->pic);
+        }
+        if ($request->filled('line')) {
+            $line = $request->line;
+            $baseQuery->whereIn('scan_outs.row_location', function ($sub) use ($line) {
+                $sub->select('row_location')->from('row_locations')->where('line_label', $line);
+            });
         }
         if ($request->filled('q')) {
             $keyword = $request->q;

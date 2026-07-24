@@ -25,44 +25,53 @@
             <form method="GET" action="{{ route('scanout.dashboard') }}" class="row g-2 align-items-end flex-nowrap overflow-auto">
                 <div class="col-sm-1" style="min-width: 140px;">
                     <label class="form-label small text-muted mb-1">Tanggal Dari</label>
-                    <input type="date" style="font-size: 0.70rem;" name="date_from" class="form-control"
+                    <input type="date" style="font-size: 0.80rem;" name="date_from" class="form-control"
                            value="{{ $filters['date_from'] ?? ($dateFrom?->format('Y-m-d')) }}">
                 </div>
                 <div class="col-sm-1" style="min-width: 140px;">
                     <label class="form-label small text-muted mb-1">Tanggal Sampai</label>
-                    <input type="date" style="font-size: 0.70rem;" name="date_to" class="form-control"
+                    <input type="date" style="font-size: 0.80rem;" name="date_to" class="form-control"
                            value="{{ $filters['date_to'] ?? ($dateTo?->format('Y-m-d')) }}">
                 </div>
-                <div class="col-sm-2" style="min-width: 180px;">
+                <div class="col-sm-1" style="min-width: 180px;">
                     <label class="form-label small text-muted mb-1">Customer</label>
-                    <select name="customer" class="form-select" style="font-size: 0.70rem;">
+                    <select name="customer" class="form-select" style="font-size: 0.80rem;">
                         <option value="">Semua Customer</option>
                         @foreach ($customerOptions as $c)
                             <option value="{{ $c }}" @selected(($filters['customer'] ?? '') === $c)>{{ $c }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-sm-2" style="min-width: 160px;">
+                <div class="col-sm-1" style="min-width: 160px;">
                     <label class="form-label small text-muted mb-1">Outgoing Type</label>
-                    <select name="outgoing_type" class="form-select" style="font-size: 0.70rem;">
+                    <select name="outgoing_type" class="form-select" style="font-size: 0.80rem;">
                         <option value="">Semua Tipe</option>
                         @foreach ($outgoingTypeOptions as $t)
                             <option value="{{ $t }}" @selected(($filters['outgoing_type'] ?? '') === $t)>{{ $t }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-sm-2" style="min-width: 160px;">
+                <div class="col-sm-1" style="min-width: 160px;">
                     <label class="form-label small text-muted mb-1">PIC Scan</label>
-                    <select name="pic" class="form-select" style="font-size: 0.70rem;">
+                    <select name="pic" class="form-select" style="font-size: 0.80rem;">
                         <option value="">Semua PIC</option>
                         @foreach ($picOptions as $p)
                             <option value="{{ $p }}" @selected(($filters['pic'] ?? '') === $p)>{{ $p }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-sm-2" style="min-width: 220px;">
+                <div class="col-sm-1" style="min-width: 160px;">
+                    <label class="form-label small text-muted mb-1">Line</label>
+                    <select name="line" class="form-select" style="font-size: 0.80rem;">
+                        <option value="">Semua Line</option>
+                        @foreach ($lineOptions as $l)
+                            <option value="{{ $l }}" @selected(($filters['line'] ?? '') === $l)>{{ $l }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-sm-1" style="min-width: 220px;">
                     <label class="form-label small text-muted mb-1">Cari (Barcode / Code Item / Outgoing)</label>
-                    <input type="text" style="font-size: 0.70rem;" name="q" class="form-control" placeholder="Ketik kata kunci..."
+                    <input type="text" style="font-size: 0.80rem;" name="q" class="form-control" placeholder="Ketik kata kunci..."
                            value="{{ $filters['q'] ?? '' }}">
                 </div>
                 <div class="col-sm-1 d-flex gap-2" style="min-width: 100px;">
@@ -93,6 +102,7 @@
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link active" href="#section-summary" data-section="section-summary">Ringkasan</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-trends" data-section="section-trends">Tren Scan Out, Customer &amp; Code Item</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-outgoing-pic" data-section="section-outgoing-pic">Outgoing Type &amp; PIC Scan</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-line-chart" data-section="section-line-chart">Line Chart</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-top10" data-section="section-top10">Top 10 Customer &amp; Code Item</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-detail-data" data-section="section-detail-data">Detail Data</a>
         </nav>
@@ -285,7 +295,14 @@
 
             <hr>
 
-            
+            <div class="row g-4">
+                <div class="col-12 col-lg-6 mx-lg-auto" id="section-line-chart">
+                    <h6 class="text-muted small text-uppercase mb-2 text-center">Proporsi Scan Out per Line</h6>
+                    <div class="chart-box" style="position: relative; height: 340px;">
+                        <canvas id="chartLine"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -299,7 +316,7 @@
                     <i class="bi bi-people-fill text-primary"></i> Top 10 Customer (Jumlah Scan Out)
                 </div>
                
-                <div class="table-responsive" style="max-height: 20rem; overflow-x: auto; overflow-y: auto; display: block; font-size: 0.60rem;">
+                <div class="table-responsive" style="max-height: 20rem; overflow-x: auto; overflow-y: auto; display: block; font-size: 0.80rem;">
                     <table class="table table-sm table-hover table-striped mb-0 align-middle">
                         <thead class="sticky-th">
                         <tr>
@@ -338,7 +355,7 @@
                     <i class="bi bi-box-seam text-success"></i> Top 10 Code Item (Jumlah Scan Out)
                 </div>
                 
-                <div class="table-responsive" style="max-height: 20rem; overflow-x: auto; overflow-y: auto; display: block; font-size: 0.60rem;">
+                <div class="table-responsive" style="max-height: 20rem; overflow-x: auto; overflow-y: auto; display: block; font-size: 0.75rem;">
                     <table class="table table-sm table-hover table-striped mb-0 align-middle">
                         <thead class="sticky-th">
                         <tr>
@@ -387,6 +404,7 @@
                     <th>No.</th>
                     <th>Tanggal Scan</th>
                     <th>Row/Lokasi</th>
+                    <th>Line</th>
                     <th>Customer</th>
                     <th>Code Item</th>
                     <th>Part No.</th>
@@ -408,6 +426,7 @@
                         <td class="text-center">{{ $rows->firstItem() + $loop->index }}</td>
                         <td class="text-nowrap">{{ $row->scan_date?->format('d-m-Y H:i:s') }}</td>
                         <td class="text-nowrap">{{ $row->row_location }}</td>
+                        <td class="text-nowrap">{{ $row->rowLocationMaster->line_label ?? '-' }}</td>
                         <td>{{ $row->customer_name }}</td>
                         <td>{{ $row->code_item }}</td>
                         <td>{{ $row->part_no }}</td>
@@ -432,7 +451,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="16" class="text-center text-muted py-4">Tidak ada data untuk filter ini.</td>
+                        <td colspan="17" class="text-center text-muted py-4">Tidak ada data untuk filter ini.</td>
                     </tr>
                 @endforelse
                 </tbody>
@@ -454,7 +473,7 @@
         const chartData = @json($chartData);
         const outgoingTypeChartData = @json($outgoingTypeChartData);
         const picScanChartData = @json($picScanChartData);
-        const rowLocationChartData = @json($rowLocationChartData);
+        const lineChartData = @json($lineChartData);
         const topCustomerChartData = @json($topCustomerChartData);
         const topCodeItemChartData = @json($topCodeItemChartData);
 
@@ -470,7 +489,7 @@
 
         let currentPeriod = 'day';
         let chartScanOut, chartCustomer, chartCodeItem, chartQty;
-        let chartOutgoingType, chartPicScan, chartTopCustomer, chartTopCodeItem;
+        let chartOutgoingType, chartPicScan, chartTopCustomer, chartTopCodeItem, chartLine;
 
         function buildTrendCharts(period) {
             const d = chartData[period];
@@ -641,6 +660,46 @@
             });
         }
 
+        function buildLineChart() {
+            const ctx = document.getElementById('chartLine');
+            if (!ctx || !lineChartData.labels?.length) return;
+
+            const total = lineChartData.values.reduce((a, b) => a + b, 0);
+            const palette = [
+                '#0d6efd', '#fd7e14', '#198754', '#dc3545', '#6f42c1', '#20c997', '#ffc107',
+                '#0dcaf0', '#d63384', '#6610f2', '#adb5bd', '#795548', '#8bc34a', '#607d8b', '#e91e63', '#6c757d',
+            ];
+
+            chartLine = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: lineChartData.labels,
+                    datasets: [{
+                        data: lineChartData.values,
+                        backgroundColor: lineChartData.labels.map((_, i) => palette[i % palette.length]),
+                        borderColor: '#fff',
+                        borderWidth: 2,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: (value) => {
+                                if (!total) return '';
+                                const pct = (value / total) * 100;
+                                return value > 0 ? pct.toFixed(0) + '%' : '';
+                            },
+                        },
+                    },
+                },
+            });
+        }
+
         
 
         function buildTopCharts() {
@@ -742,7 +801,7 @@
 
         buildOutgoingTypeChart();
         buildPicScanChart();
-        buildRowLocationChart();
+        buildLineChart();
         buildTopCharts();
     </script>
 @endsection
