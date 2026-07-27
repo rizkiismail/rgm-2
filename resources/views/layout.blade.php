@@ -208,6 +208,32 @@
             .table-responsive { font-size : 0.50rem}
         }
 
+        /* ===== Pagination: never overflow the mobile viewport =====
+           Laravel's Bootstrap-4 pagination view renders a single <ul class="pagination">
+           with one <li> per page number. With many pages this row is wider than a phone
+           screen, so it must be allowed to wrap instead of forcing horizontal overflow. */
+        .card-footer { overflow-x: hidden; }
+        .pagination {
+            flex-wrap: wrap;
+            row-gap: .35rem;
+            margin-bottom: 0;
+        }
+        @media (max-width: 576px) {
+            .pagination {
+                justify-content: center;
+                gap: .2rem;
+            }
+            .pagination .page-item {
+                margin: 0;
+            }
+            .pagination .page-link {
+                padding: .3rem .55rem;
+                font-size: .78rem;
+                min-width: 2.1rem;
+                text-align: center;
+            }
+        }
+
         /* ===== Responsive navbar / hamburger menus ===== */
         .navbar-toggler {
             border-color: rgba(255,255,255,.35);

@@ -340,7 +340,7 @@
                     <i class="bi bi-people-fill text-primary"></i> Top 10 Customer
                 </div>
                 <div class="table-responsive top10-table-wrap" data-visible-rows="10" style="font-size: 0.60rem;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style= "overflow-hidden">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle">
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
@@ -384,7 +384,7 @@
                     <i class="bi bi-box-seam text-success"></i> Top 10 Item
                 </div>
                 <div class="table-responsive top10-table-wrap" data-visible-rows="10" style="font-size: 0.60rem;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle"  style= "overflow-hidden">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle" >
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
@@ -422,7 +422,7 @@
         <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
             <span><i class="bi bi-table"></i> Detail Data ({{ number_format($rows->total()) }} baris sesuai filter)</span>
         </div>
-        <div class="table-responsive" style="max-height: 65vh;">
+        <div class="table-responsive" style="max-height: 65vh; font-size: 0.60rem;">
             <table class="table table-sm table-hover table-striped mb-0 align-middle" >
                 <thead class="sticky-th">
                 <tr>

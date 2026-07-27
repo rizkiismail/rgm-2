@@ -105,7 +105,13 @@ class BalanceReturController extends Controller
         ];
 
         // Daftar customer untuk dropdown filter (dari seluruh data, bukan hasil filter).
-        $customerOptions = BalanceRetur::whereNotNull('customer_name')->distinct()->orderBy('customer_name')->pluck('customer_name');
+        // Di-cache singkat karena query ini tidak bergantung pada filter tapi tadinya
+        // dijalankan ulang (full scan) di setiap request.
+        $customerOptions = \Illuminate\Support\Facades\Cache::remember(
+            'balance_retur.customer_options',
+            300,
+            fn () => BalanceRetur::whereNotNull('customer_name')->distinct()->orderBy('customer_name')->pluck('customer_name')
+        );
 
         // Tabel detail dengan pencarian sederhana + pagination.
         $rows = (clone $baseQuery)->orderByDesc('date_retur')->paginate(25)->withQueryString();
@@ -255,39 +261,39 @@ class BalanceReturController extends Controller
      */
     protected function buildSummary($baseQuery): array
     {
-        return [
-            'totalRetur' => (clone $baseQuery)->distinct('no_retur')->count('no_retur'),
-            'totalCustomer' => (clone $baseQuery)->whereNotNull('customer_name')->distinct('customer_name')->count('customer_name'),
-            'totalCodeItem' => (clone $baseQuery)->whereNotNull('code_item')->distinct('code_item')->count('code_item'),
-            'totalRows' => (clone $baseQuery)->count(),
-            'totalQtyRetur' => (clone $baseQuery)->sum('qty_retur'),
-            'totalQtyReceivingPart' => (clone $baseQuery)->sum('qty_receiving_part'),
-            'totalQtyPendingReceivingPart' => (clone $baseQuery)->sum('qty_pending_receiving_part'),
-            'receivingStatusCount' => $this->statusBreakdown($baseQuery, 'status_receiving'),
-            'totalQtyDeliveryPart' => (clone $baseQuery)->sum('qty_delivery_part'),
-            'totalQtyPendingDeliveryPart' => (clone $baseQuery)->sum('qty_pending_delivery_part'),
-            'deliveryStatusCount' => $this->statusBreakdown($baseQuery, 'status_delivery'),
-            'finalStatusCount' => $this->statusBreakdown($baseQuery, 'final_status'),
-        ];
-    }
-
-    /**
-     * Hitung jumlah baris berstatus CLOSE dan OPEN untuk kolom status tertentu
-     * (status_receiving / status_delivery / final_status).
-     *
-     * @return array{CLOSE:int, OPEN:int}
-     */
-    protected function statusBreakdown($baseQuery, string $column): array
-    {
-        $result = (clone $baseQuery)
-            ->whereNotNull($column)
-            ->select($column, DB::raw('COUNT(*) as jumlah'))
-            ->groupBy($column)
-            ->pluck('jumlah', $column);
+        // Satu query tunggal untuk seluruh angka Ringkasan (dulu 10 query terpisah
+        // yang masing-masing full scan tabel yang sama -> penyebab utama timeout).
+        $row = (clone $baseQuery)
+            ->selectRaw('COUNT(DISTINCT no_retur) as total_retur')
+            ->selectRaw('COUNT(DISTINCT CASE WHEN customer_name IS NOT NULL THEN customer_name END) as total_customer')
+            ->selectRaw('COUNT(DISTINCT CASE WHEN code_item IS NOT NULL THEN code_item END) as total_code_item')
+            ->selectRaw('COUNT(*) as total_rows')
+            ->selectRaw('COALESCE(SUM(qty_retur), 0) as total_qty_retur')
+            ->selectRaw('COALESCE(SUM(qty_receiving_part), 0) as total_qty_receiving_part')
+            ->selectRaw('COALESCE(SUM(qty_pending_receiving_part), 0) as total_qty_pending_receiving_part')
+            ->selectRaw('COALESCE(SUM(qty_delivery_part), 0) as total_qty_delivery_part')
+            ->selectRaw('COALESCE(SUM(qty_pending_delivery_part), 0) as total_qty_pending_delivery_part')
+            ->selectRaw("SUM(CASE WHEN status_receiving = 'CLOSE' THEN 1 ELSE 0 END) as receiving_close")
+            ->selectRaw("SUM(CASE WHEN status_receiving = 'OPEN' THEN 1 ELSE 0 END) as receiving_open")
+            ->selectRaw("SUM(CASE WHEN status_delivery = 'CLOSE' THEN 1 ELSE 0 END) as delivery_close")
+            ->selectRaw("SUM(CASE WHEN status_delivery = 'OPEN' THEN 1 ELSE 0 END) as delivery_open")
+            ->selectRaw("SUM(CASE WHEN final_status = 'CLOSE' THEN 1 ELSE 0 END) as final_close")
+            ->selectRaw("SUM(CASE WHEN final_status = 'OPEN' THEN 1 ELSE 0 END) as final_open")
+            ->first();
 
         return [
-            'CLOSE' => (int) ($result['CLOSE'] ?? 0),
-            'OPEN' => (int) ($result['OPEN'] ?? 0),
+            'totalRetur' => (int) $row->total_retur,
+            'totalCustomer' => (int) $row->total_customer,
+            'totalCodeItem' => (int) $row->total_code_item,
+            'totalRows' => (int) $row->total_rows,
+            'totalQtyRetur' => (float) $row->total_qty_retur,
+            'totalQtyReceivingPart' => (float) $row->total_qty_receiving_part,
+            'totalQtyPendingReceivingPart' => (float) $row->total_qty_pending_receiving_part,
+            'receivingStatusCount' => ['CLOSE' => (int) $row->receiving_close, 'OPEN' => (int) $row->receiving_open],
+            'totalQtyDeliveryPart' => (float) $row->total_qty_delivery_part,
+            'totalQtyPendingDeliveryPart' => (float) $row->total_qty_pending_delivery_part,
+            'deliveryStatusCount' => ['CLOSE' => (int) $row->delivery_close, 'OPEN' => (int) $row->delivery_open],
+            'finalStatusCount' => ['CLOSE' => (int) $row->final_close, 'OPEN' => (int) $row->final_open],
         ];
     }
 

@@ -119,10 +119,28 @@ class ScanOutController extends Controller
         ];
 
         // Daftar dropdown filter (dari seluruh data, bukan hasil filter).
-        $customerOptions = ScanOut::whereNotNull('customer_name')->distinct()->orderBy('customer_name')->pluck('customer_name');
-        $outgoingTypeOptions = ScanOut::whereNotNull('outgoing_type')->distinct()->orderBy('outgoing_type')->pluck('outgoing_type');
-        $picOptions = ScanOut::whereNotNull('scan_by_name')->distinct()->orderBy('scan_by_name')->pluck('scan_by_name');
-        $lineOptions = DB::table('row_locations')->whereNotNull('line_label')->distinct()->orderBy('line')->pluck('line_label');
+        // Di-cache singkat karena query ini tidak bergantung pada filter tapi tadinya
+        // dijalankan ulang (full scan) di setiap request.
+        $customerOptions = \Illuminate\Support\Facades\Cache::remember(
+            'scan_out.customer_options',
+            300,
+            fn () => ScanOut::whereNotNull('customer_name')->distinct()->orderBy('customer_name')->pluck('customer_name')
+        );
+        $outgoingTypeOptions = \Illuminate\Support\Facades\Cache::remember(
+            'scan_out.outgoing_type_options',
+            300,
+            fn () => ScanOut::whereNotNull('outgoing_type')->distinct()->orderBy('outgoing_type')->pluck('outgoing_type')
+        );
+        $picOptions = \Illuminate\Support\Facades\Cache::remember(
+            'scan_out.pic_options',
+            300,
+            fn () => ScanOut::whereNotNull('scan_by_name')->distinct()->orderBy('scan_by_name')->pluck('scan_by_name')
+        );
+        $lineOptions = \Illuminate\Support\Facades\Cache::remember(
+            'scan_out.line_options',
+            300,
+            fn () => DB::table('row_locations')->whereNotNull('line_label')->distinct()->orderBy('line')->pluck('line_label')
+        );
 
         // Tabel detail dengan pencarian sederhana + pagination.
         $rows = (clone $baseQuery)->with('rowLocationMaster')->orderByDesc('scan_date')->paginate(25)->withQueryString();
@@ -281,14 +299,26 @@ class ScanOutController extends Controller
      */
     protected function buildSummary($baseQuery): array
     {
+        // Satu query tunggal untuk seluruh angka scalar Ringkasan (dulu 6 query
+        // terpisah yang masing-masing full scan tabel yang sama).
+        $row = (clone $baseQuery)
+            ->selectRaw('COUNT(*) as total_scan_out')
+            ->selectRaw('COUNT(DISTINCT CASE WHEN customer_name IS NOT NULL THEN customer_name END) as total_customer')
+            ->selectRaw('COUNT(DISTINCT CASE WHEN code_item IS NOT NULL THEN code_item END) as total_code_item')
+            ->selectRaw('COUNT(DISTINCT CASE WHEN barcode IS NOT NULL THEN barcode END) as total_barcode')
+            ->selectRaw('COUNT(DISTINCT CASE WHEN outgoing_no IS NOT NULL THEN outgoing_no END) as total_outgoing')
+            ->selectRaw('COUNT(DISTINCT CASE WHEN scan_by_name IS NOT NULL THEN scan_by_name END) as total_pic')
+            ->selectRaw('COALESCE(SUM(qty), 0) as total_qty')
+            ->first();
+
         return [
-            'totalScanOut' => (clone $baseQuery)->count(),
-            'totalCustomer' => (clone $baseQuery)->whereNotNull('customer_name')->distinct('customer_name')->count('customer_name'),
-            'totalCodeItem' => (clone $baseQuery)->whereNotNull('code_item')->distinct('code_item')->count('code_item'),
-            'totalBarcode' => (clone $baseQuery)->whereNotNull('barcode')->distinct('barcode')->count('barcode'),
-            'totalOutgoing' => (clone $baseQuery)->whereNotNull('outgoing_no')->distinct('outgoing_no')->count('outgoing_no'),
-            'totalPic' => (clone $baseQuery)->whereNotNull('scan_by_name')->distinct('scan_by_name')->count('scan_by_name'),
-            'totalQty' => (clone $baseQuery)->sum('qty'),
+            'totalScanOut' => (int) $row->total_scan_out,
+            'totalCustomer' => (int) $row->total_customer,
+            'totalCodeItem' => (int) $row->total_code_item,
+            'totalBarcode' => (int) $row->total_barcode,
+            'totalOutgoing' => (int) $row->total_outgoing,
+            'totalPic' => (int) $row->total_pic,
+            'totalQty' => (float) $row->total_qty,
             'outgoingTypeCount' => $this->outgoingTypeBreakdown($baseQuery),
         ];
     }
