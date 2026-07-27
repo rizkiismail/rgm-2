@@ -95,6 +95,7 @@
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link active" href="#section-summary" data-section="section-summary" style="font-size: 0.80rem;">Ringkasan</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-trends" data-section="section-trends" style="font-size: 0.80rem;">Tren BSTHP Customer &amp; PIC Verifikator</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-pic-bsthp" data-section="section-pic-bsthp" style="font-size: 0.80rem;">Jumlah BSTHP Berdasarkan PIC Verifikator</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-hourly-arrival" data-section="section-hourly-arrival" style="font-size: 0.80rem;">Jam Kedatangan BSTHP</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-customer-line" data-section="section-customer-line" style="font-size: 0.80rem;">Customer Berdasarkan Line</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-top10" data-section="section-top10" style="font-size: 0.80rem;">Top 10 Customer &amp; Item</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" data-section="section-detail-data" href="#section-detail-data" style="font-size: 0.80rem;">Detail data</a>
@@ -264,6 +265,27 @@
                     <div class="col-12">
                         <div class="chart-box" style="position: relative; height: 380px; padding-top: 8px;">
                             <canvas id="chartPicBsthp"></canvas>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- ===================== GRAFIK JAM KEDATANGAN BSTHP ===================== --}}
+    <div class="card table-card mb-4" id="section-hourly-arrival">
+        <div class="card-header bg-white fw-semibold">
+            <i class="bi bi-clock-history text-warning"></i> Grafik Jam Kedatangan BSTHP
+        </div>
+        <div class="card-body">
+            @if (empty($hourlyArrivalChartData['labels']) || array_sum($hourlyArrivalChartData['values']) === 0)
+                <p class="text-muted mb-0">Belum ada data jam kedatangan untuk ditampilkan.</p>
+            @else
+                <p class="text-muted small mb-3">Jumlah BSTHP berdasarkan jam pada kolom Date Income, mengikuti filter tanggal di atas.</p>
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="chart-box" style="position: relative; height: 380px; padding-top: 8px;">
+                            <canvas id="chartHourlyArrival"></canvas>
                         </div>
                     </div>
                 </div>
@@ -485,6 +507,7 @@
 
         const chartData = @json($chartData);
         const picBsthpChartData = @json($picBsthpChartData);
+        const hourlyArrivalChartData = @json($hourlyArrivalChartData);
         const customerByLineChartData = @json($customerByLineChartData);
 
         const periodLabelFormatters = {
@@ -508,7 +531,7 @@
         };
 
         let currentPeriod = 'day';
-        let chartBsthp, chartCustomer, chartPic, chartPicBsthp, chartPicBsthpPie, chartCustomerByLine;
+        let chartBsthp, chartCustomer, chartPic, chartPicBsthp, chartPicBsthpPie, chartHourlyArrival, chartCustomerByLine;
 
         /**
          * Palet warna konsisten untuk tiap PIC (dipakai bareng oleh bar & pie chart).
@@ -596,6 +619,51 @@
                                 return pct >= 4 ? pct.toFixed(0) + '%' : '';
                             },
                         },
+                    },
+                },
+            });
+        }
+
+        function buildHourlyArrivalChart() {
+            const ctx = document.getElementById('chartHourlyArrival');
+            if (!ctx || !hourlyArrivalChartData.labels?.length) return;
+
+            if (chartHourlyArrival) chartHourlyArrival.destroy();
+
+            chartHourlyArrival = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: hourlyArrivalChartData.labels,
+                    datasets: [{
+                        label: 'Jumlah BSTHP',
+                        data: hourlyArrivalChartData.values,
+                        backgroundColor: '#fd7e14',
+                        borderRadius: 4,
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (value) => value > 0 ? Number(value).toLocaleString('id-ID') : '',
+                        },
+                    }],
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { clip: false },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: (item) => {
+                                    const rows = hourlyArrivalChartData.rows?.[item.dataIndex];
+                                    return rows !== undefined ? `Jumlah baris: ${Number(rows).toLocaleString('id-ID')}` : '';
+                                },
+                            },
+                        },
+                    },
+                    layout: { padding: { top: 16, bottom: 8 } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0 } },
+                        x: { ticks: { autoSkip: false, maxRotation: 0 } },
                     },
                 },
             });
@@ -781,6 +849,10 @@
 
         if (document.getElementById('chartPicBsthpPie')) {
             buildPicBsthpPieChart();
+        }
+
+        if (document.getElementById('chartHourlyArrival')) {
+            buildHourlyArrivalChart();
         }
 
         if (document.getElementById('chartCustomerByLine')) {

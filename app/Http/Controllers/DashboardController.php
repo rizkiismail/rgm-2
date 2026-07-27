@@ -84,6 +84,10 @@ class DashboardController extends Controller
         // Breakdown jumlah BSTHP unik per PIC verifikator untuk grafik khusus.
         $picBsthpChartData = $this->buildPicBsthpChartData($baseQuery);
 
+        // Breakdown jumlah BSTHP berdasarkan jam kedatangan (dari jam pada date_income),
+        // mengikuti filter tanggal yang sedang aktif di halaman.
+        $hourlyArrivalChartData = $this->buildHourlyArrivalChartData($baseQuery);
+
         // Breakdown jumlah customer (unik) per Line untuk pie chart.
         $customerByLineChartData = $this->buildCustomerByLineChartData($baseQuery);
 
@@ -183,6 +187,7 @@ class DashboardController extends Controller
             'totalVerified' => $totalVerified,
             'verifiedByPic' => $verifiedByPic,
             'picBsthpChartData' => $picBsthpChartData,
+            'hourlyArrivalChartData' => $hourlyArrivalChartData,
             'customerByLineChartData' => $customerByLineChartData,
             'topCustomers' => $topCustomers,
             'topItems' => $topItems,
@@ -213,6 +218,42 @@ class DashboardController extends Controller
         return [
             'labels' => $result->pluck('verify_by')->all(),
             'values' => $result->pluck('bsthp_count')->map(fn ($v) => (int) $v)->all(),
+        ];
+    }
+
+    /**
+     * Hitung jumlah BSTHP (unik) berdasarkan jam kedatangan, diambil dari jam
+     * pada kolom `date_income` (00:00 s.d. 23:00), mengikuti filter tanggal
+     * (dan filter lain) yang sedang aktif lewat $baseQuery.
+     */
+    protected function buildHourlyArrivalChartData($baseQuery): array
+    {
+        $result = (clone $baseQuery)
+            ->whereNotNull('date_income')
+            ->selectRaw('HOUR(date_income) as hour')
+            ->selectRaw('COUNT(DISTINCT bsthp_no) as bsthp_count')
+            ->selectRaw('COUNT(*) as rows_count')
+            ->groupBy('hour')
+            ->orderBy('hour')
+            ->get()
+            ->keyBy('hour');
+
+        $labels = [];
+        $values = [];
+        $rowsCount = [];
+
+        for ($hour = 0; $hour < 24; $hour++) {
+            $row = $result->get($hour);
+
+            $labels[] = sprintf('%02d:00', $hour);
+            $values[] = $row ? (int) $row->bsthp_count : 0;
+            $rowsCount[] = $row ? (int) $row->rows_count : 0;
+        }
+
+        return [
+            'labels' => $labels,
+            'values' => $values,
+            'rows' => $rowsCount,
         ];
     }
 
