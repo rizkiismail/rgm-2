@@ -249,6 +249,13 @@
         }
         .section-nav.flex-column .nav-link { text-align: left; width: 100%; }
 
+        /* ===== Top 10 tables: always show 10 rows, scroll for the rest ===== */
+        .top10-table-wrap {
+            overflow-x: auto;
+            overflow-y: auto;
+            display: block;
+        }
+        .top10-table-wrap thead.sticky-th th { position: sticky; top: 0; z-index: 1; }
 
     </style>
 </head>
@@ -419,6 +426,49 @@
                 applyTheme(currentTheme);
             });
         }
+
+        // ===== Top 10 tables: force exactly 10 visible rows, scroll for the rest =====
+        // Height is measured from the actually-rendered header + first row, so this
+        // works consistently across desktop and mobile even though each table uses
+        // a different font-size per breakpoint.
+        function sizeTop10Tables() {
+            document.querySelectorAll('.top10-table-wrap').forEach(function (wrap) {
+                var table = wrap.querySelector('table');
+                if (!table) return;
+                var thead = table.querySelector('thead');
+                var tbody = table.querySelector('tbody');
+                if (!thead || !tbody) return;
+                var rows = tbody.querySelectorAll('tr');
+
+                // Reset before re-measuring so old forced heights don't skew the numbers.
+                wrap.style.maxHeight = '';
+                wrap.style.height = '';
+
+                var visibleRows = parseInt(wrap.getAttribute('data-visible-rows'), 10) || 10;
+
+                // 10 rows or fewer (including the "no data" placeholder row): let it size
+                // naturally, no need to force a scrollbar.
+                if (rows.length <= visibleRows) {
+                    return;
+                }
+
+                var theadHeight = thead.getBoundingClientRect().height;
+                var rowHeight = rows[0].getBoundingClientRect().height;
+                if (!theadHeight || !rowHeight) return;
+
+                wrap.style.maxHeight = Math.ceil(theadHeight + (rowHeight * visibleRows)) + 'px';
+            });
+        }
+
+        var top10ResizeTimer;
+        function scheduleSizeTop10Tables() {
+            clearTimeout(top10ResizeTimer);
+            top10ResizeTimer = setTimeout(sizeTop10Tables, 150);
+        }
+
+        document.addEventListener('DOMContentLoaded', sizeTop10Tables);
+        window.addEventListener('load', sizeTop10Tables);
+        window.addEventListener('resize', scheduleSizeTop10Tables);
 
         window.addEventListener('load', updateStickyOffsets);
         window.addEventListener('resize', updateStickyOffsets);

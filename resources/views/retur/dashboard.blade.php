@@ -344,7 +344,7 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-people-fill text-primary"></i> Top 10 Customer
                 </div>
-                <div class="table-responsive" style="max-height: 20rem; overflow-x: auto; overflow-y: auto; display: block; font-size: 0.55rem;">
+                <div class="table-responsive top10-table-wrap" data-visible-rows="10" style="font-size: 0.60rem;">
                     <table class="table table-sm table-hover table-striped mb-0 align-middle">
                         <thead class="sticky-th">
                         <tr>
@@ -390,7 +390,7 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-box-seam text-success"></i> Top 10 Code Item
                 </div>
-                <div class="table-responsive" style="height: 20rem; font-size: 0.5386rem; overflow-x: auto; overflow-y: auto; display: block;">
+                <div class="table-responsive top10-table-wrap" data-visible-rows="10" style="font-size: 0.60rem;">
                     <table class="table table-sm table-hover table-striped mb-0 align-middle" >
                         <thead class="sticky-th">
                         <tr>
@@ -434,7 +434,7 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-person-badge-fill text-info"></i> Top 10 PIC PPIC Delivery
                 </div>
-                <div class="table-responsive" style="height: 20rem; overflow-x: auto; overflow-y: auto; display: block; font-size: 0.70rem;">
+                <div class="table-responsive top10-table-wrap" data-visible-rows="10" style="font-size: 0.70rem;">
                     <table class="table table-sm table-hover table-striped mb-0 align-middle" >
                         <thead class="sticky-th">
                         <tr>

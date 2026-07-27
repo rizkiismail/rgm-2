@@ -339,7 +339,7 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-people-fill text-primary"></i> Top 10 Customer
                 </div>
-                <div class="table-responsive" style="height: 20rem; overflow-x: auto; overflow-y: auto; display: block; font-size: 0.60rem;">
+                <div class="table-responsive top10-table-wrap" data-visible-rows="10" style="font-size: 0.60rem;">
                     <table class="table table-sm table-hover table-striped mb-0 align-middle">
                         <thead class="sticky-th">
                         <tr>
@@ -383,7 +383,7 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-box-seam text-success"></i> Top 10 Item
                 </div>
-                <div class="table-responsive" style="height: 20rem; overflow-x: auto; overflow-y: auto; display: block; font-size: 0.60rem;">
+                <div class="table-responsive top10-table-wrap" data-visible-rows="10" style="font-size: 0.60rem;">
                     <table class="table table-sm table-hover table-striped mb-0 align-middle" >
                         <thead class="sticky-th">
                         <tr>
