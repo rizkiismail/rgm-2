@@ -257,9 +257,9 @@
     <div class="container-fluid px-3 px-md-4">
         <a class="navbar-brand" href="{{ route('dashboard') }}">
             <i class="bi bi-box-seam-fill me-1"></i>
-            @if (request()->routeIs('retur.dashboard'))
+            @if (request()->routeIs('retur.dashboard') || request()->routeIs('retur.import.form'))
                 Monitoring Balance Retur
-            @elseif (request()->routeIs('scanout.dashboard'))
+            @elseif (request()->routeIs('scanout.dashboard') || request()->routeIs('scanout.import.form'))
                 Monitoring Raking Scan Out
             @else
                 Monitoring Receiving Goods
@@ -297,7 +297,7 @@
                         </li>
                     </ul>
                 </div>
-                <div class="btn-group">
+      <div class="btn-group">
                     <button type="button" class="btn btn-sm {{ request()->routeIs(['import.form', 'retur.import.form', 'scanout.import.form']) ? 'btn-warning' : 'btn-outline-light' }} dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-upload"></i> Upload Data
                     </button>
@@ -319,7 +319,6 @@
                         </li>
                     </ul>
                 </div>
-                
             </div>
         </div>
     </div>
