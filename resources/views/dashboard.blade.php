@@ -655,7 +655,7 @@
                             callbacks: {
                                 afterLabel: (item) => {
                                     const rows = hourlyArrivalChartData.rows?.[item.dataIndex];
-                                    return rows !== undefined ? `Jumlah baris: ${Number(rows).toLocaleString('id-ID')}` : '';
+                                    return rows !== undefined ? `Jumlah item: ${Number(rows).toLocaleString('id-ID')}` : '';
                                 },
                             },
                         },
