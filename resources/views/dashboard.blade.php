@@ -340,7 +340,7 @@
                     <i class="bi bi-people-fill text-primary"></i> Top 10 Customer
                 </div>
                 <div class="table-responsive top10-table-wrap" data-visible-rows="10" style="font-size: 0.60rem;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle" style= "overflow-hidden">
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
@@ -384,7 +384,7 @@
                     <i class="bi bi-box-seam text-success"></i> Top 10 Item
                 </div>
                 <div class="table-responsive top10-table-wrap" data-visible-rows="10" style="font-size: 0.60rem;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle" >
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle"  style= "overflow-hidden">
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>

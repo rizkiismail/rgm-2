@@ -344,7 +344,7 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-people-fill text-primary"></i> Top 10 Customer
                 </div>
-                <div class="table-responsive top10-table-wrap" data-visible-rows="10" style="font-size: 0.60rem;">
+                <div class="table-responsive top10-table-wrap" data-visible-rows="10" style="font-size: 0.60rem; overflow-hidden;">
                     <table class="table table-sm table-hover table-striped mb-0 align-middle">
                         <thead class="sticky-th">
                         <tr>
