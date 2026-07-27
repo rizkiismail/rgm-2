@@ -231,13 +231,13 @@ class BalanceReturExcelExporter
         }
 
         // Lebar kolom otomatis menyesuaikan isi.
-        foreach (range('A', 'W') as $col) {
+        foreach (range('A', 'V') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
         // Garis border tipis untuk seluruh tabel supaya rapi saat dicetak.
         if ($lastRow >= 1) {
-            $sheet->getStyle("A1:W{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->getStyle("A1:V{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
         }
     }
 }

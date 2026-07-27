@@ -13,27 +13,31 @@
 
     {{-- ===================== FILTER ===================== --}}
     <div class="card filter-card sticky-filter mb-4">
-        <div class="card-body" style="font-size: 0.80rem;">
-            <button id="filterToggle" type="button"
-                    class="btn btn-outline-secondary w-100 justify-content-between align-items-center mb-0"
-                    data-bs-toggle="collapse" data-bs-target="#filterCollapse"
-                    aria-expanded="false" aria-controls="filterCollapse">
-                <span><i class="bi bi-funnel-fill me-2"></i>Filter Data</span>
-                <i class="bi bi-list fs-5"></i>
-            </button>
-            <div class="collapse filter-collapse-body mt-3 mt-md-0" id="filterCollapse">
-            <form method="GET" action="{{ route('scanout.dashboard') }}" class="row g-2 align-items-end flex-nowrap overflow-auto">
-                <div class="col-sm-1" style="min-width: 140px;">
+    <div class="card-body" style="font-size: 0.80rem;">
+        <button id="filterToggle" type="button"
+        class="btn btn-outline-secondary w-100 d-flex d-lg-none justify-content-between align-items-center mb-0"
+        data-bs-toggle="collapse" data-bs-target="#filterCollapse"
+        aria-expanded="false" aria-controls="filterCollapse">
+    <span><i class="bi bi-funnel-fill me-2"></i>Filter Data</span>
+    <i class="bi bi-list fs-5"></i>
+</button>
+
+        <div class="collapse filter-collapse-body mt-3 mt-md-0 d-lg-block" id="filterCollapse" >
+            <form method="GET" action="{{ route('scanout.dashboard') }}" class="row g-2 align-items-end">
+
+                <div class="col-6 col-md-3 col-lg-2">
                     <label class="form-label small text-muted mb-1">Tanggal Dari</label>
                     <input type="date" style="font-size: 0.80rem;" name="date_from" class="form-control"
                            value="{{ $filters['date_from'] ?? ($dateFrom?->format('Y-m-d')) }}">
                 </div>
-                <div class="col-sm-1" style="min-width: 140px;">
+
+                <div class="col-6 col-md-3 col-lg-2">
                     <label class="form-label small text-muted mb-1">Tanggal Sampai</label>
                     <input type="date" style="font-size: 0.80rem;" name="date_to" class="form-control"
                            value="{{ $filters['date_to'] ?? ($dateTo?->format('Y-m-d')) }}">
                 </div>
-                <div class="col-sm-1" style="min-width: 180px;">
+
+                <div class="col-6 col-md-3 col-lg-2">
                     <label class="form-label small text-muted mb-1">Customer</label>
                     <select name="customer" class="form-select" style="font-size: 0.80rem;">
                         <option value="">Semua Customer</option>
@@ -42,7 +46,8 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-sm-1" style="min-width: 160px;">
+
+                <div class="col-6 col-md-3 col-lg-2">
                     <label class="form-label small text-muted mb-1">Outgoing Type</label>
                     <select name="outgoing_type" class="form-select" style="font-size: 0.80rem;">
                         <option value="">Semua Tipe</option>
@@ -51,7 +56,8 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-sm-1" style="min-width: 160px;">
+
+                <div class="col-6 col-md-3 col-lg-2">
                     <label class="form-label small text-muted mb-1">PIC Scan</label>
                     <select name="pic" class="form-select" style="font-size: 0.80rem;">
                         <option value="">Semua PIC</option>
@@ -60,7 +66,8 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-sm-1" style="min-width: 160px;">
+
+                <div class="col-6 col-md-3 col-lg-2">
                     <label class="form-label small text-muted mb-1">Line</label>
                     <select name="line" class="form-select" style="font-size: 0.80rem;">
                         <option value="">Semua Line</option>
@@ -69,16 +76,26 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-sm-1" style="min-width: 220px;">
+
+                <div class="col-12 col-md-8 col-lg-8">
                     <label class="form-label small text-muted mb-1">Cari (Barcode / Code Item / Outgoing)</label>
-                    <input type="text" style="font-size: 0.80rem;" name="q" class="form-control" placeholder="Ketik kata kunci..."
+                    <input type="text" style="font-size: 0.80rem;" name="q" class="form-control"
+                           placeholder="Ketik kata kunci..."
                            value="{{ $filters['q'] ?? '' }}">
                 </div>
-                <div class="col-sm-1 d-flex gap-2" style="min-width: 100px;">
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-funnel-fill"></i></button>
-                    <a href="{{ route('scanout.dashboard') }}" class="btn btn-outline-secondary" title="Reset filter"><i class="bi bi-arrow-counterclockwise"></i></a>
+
+                <div class="col-12 col-md-4 col-lg-4">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill">
+                            <i class="bi bi-funnel-fill"></i>
+                        </button>
+                        <a href="{{ route('scanout.dashboard') }}" class="btn btn-outline-secondary flex-fill" title="Reset filter">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </a>
+                    </div>
                 </div>
             </form>
+
             @if ($boundsMin && $boundsMax)
                 <div class="small text-muted mt-2">
                     <i class="bi bi-calendar-range"></i>
@@ -86,9 +103,9 @@
                     sampai <strong>{{ \Illuminate\Support\Carbon::parse($boundsMax)->translatedFormat('d M Y') }}</strong>.
                 </div>
             @endif
-            </div>
         </div>
     </div>
+</div>
 
     <div class="mb-4 section-nav-wrapper">
         <button id="sectionNavToggle" type="button"

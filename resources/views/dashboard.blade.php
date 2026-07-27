@@ -56,7 +56,7 @@
                 <div class="col-6 col-md-1">
                     <label class="form-label small text-muted mb-1">Line</label>
                     <select name="line" class="form-select" style="font-size: 0.80rem;">
-                        <option value="" >Semua</option>
+                        <option value="" >Semua Line</option>
                         @foreach ($lineOptions as $l)
                             <option value="{{ $l }}" @selected((string) ($filters['line'] ?? '') === (string) $l)>{{ $l }}</option>
                         @endforeach
