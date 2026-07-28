@@ -53,13 +53,23 @@ class DashboardController extends Controller
             });
         }
 
-        // Klon query dasar untuk masing-masing statistik agar tidak saling mempengaruhi.
-        $totalBsthp = (clone $baseQuery)->distinct('bsthp_no')->count('bsthp_no');
-        $totalCodeItem = (clone $baseQuery)->distinct('code_item')->count('code_item');
-        $totalBarcode = (clone $baseQuery)->whereNotNull('label_barcode_no')->distinct('label_barcode_no')->count('label_barcode_no');
-        $totalCustomer = (clone $baseQuery)->distinct('customer')->count('customer');
-        $totalRows = (clone $baseQuery)->count();
-        $totalQty = (clone $baseQuery)->sum('qty');
+        // Satu query tunggal untuk seluruh statistik scalar (dulu 6 query terpisah
+        // yang masing-masing full scan tabel yang sama -> salah satu penyebab timeout).
+        $statsRow = (clone $baseQuery)
+            ->selectRaw('COUNT(DISTINCT bsthp_no) as total_bsthp')
+            ->selectRaw('COUNT(DISTINCT code_item) as total_code_item')
+            ->selectRaw('COUNT(DISTINCT CASE WHEN label_barcode_no IS NOT NULL THEN label_barcode_no END) as total_barcode')
+            ->selectRaw('COUNT(DISTINCT customer) as total_customer')
+            ->selectRaw('COUNT(*) as total_rows')
+            ->selectRaw('COALESCE(SUM(qty), 0) as total_qty')
+            ->first();
+
+        $totalBsthp = (int) $statsRow->total_bsthp;
+        $totalCodeItem = (int) $statsRow->total_code_item;
+        $totalBarcode = (int) $statsRow->total_barcode;
+        $totalCustomer = (int) $statsRow->total_customer;
+        $totalRows = (int) $statsRow->total_rows;
+        $totalQty = (float) $statsRow->total_qty;
 
         // Breakdown jumlah item yang diverifikasi per PIC, mis. "DANDI: 5"
         $verifiedByPic = (clone $baseQuery)
@@ -73,6 +83,10 @@ class DashboardController extends Controller
 
         // Breakdown jumlah BSTHP unik per PIC verifikator untuk grafik khusus.
         $picBsthpChartData = $this->buildPicBsthpChartData($baseQuery);
+
+        // Breakdown jumlah BSTHP berdasarkan jam kedatangan (dari jam pada date_income),
+        // mengikuti filter tanggal yang sedang aktif di halaman.
+        $hourlyArrivalChartData = $this->buildHourlyArrivalChartData($baseQuery);
 
         // Breakdown jumlah customer (unik) per Line untuk pie chart.
         $customerByLineChartData = $this->buildCustomerByLineChartData($baseQuery);
@@ -109,15 +123,29 @@ class DashboardController extends Controller
             ->get();
 
         // Daftar customer & PIC untuk dropdown filter (dari seluruh data, bukan hasil filter).
-        $customerOptions = ReceivingGood::query()
-            ->whereNotNull('customer')
-            ->leftJoin('customers', 'customers.name', '=', 'receiving_goods.customer')
-            ->select('receiving_goods.customer', 'customers.line as line')
-            ->distinct()
-            ->orderBy('receiving_goods.customer')
-            ->get();
-        $picOptions = ReceivingGood::whereNotNull('verify_by')->distinct()->orderBy('verify_by')->pluck('verify_by');
-        $lineOptions = Customer::whereNotNull('line')->distinct()->orderBy('line')->pluck('line');
+        // Di-cache singkat karena query ini tidak bergantung pada filter tapi tadinya
+        // dijalankan ulang (full scan + join) di setiap request.
+        $customerOptions = \Illuminate\Support\Facades\Cache::remember(
+            'receiving_goods.customer_options',
+            300,
+            fn () => ReceivingGood::query()
+                ->whereNotNull('customer')
+                ->leftJoin('customers', 'customers.name', '=', 'receiving_goods.customer')
+                ->select('receiving_goods.customer', 'customers.line as line')
+                ->distinct()
+                ->orderBy('receiving_goods.customer')
+                ->get()
+        );
+        $picOptions = \Illuminate\Support\Facades\Cache::remember(
+            'receiving_goods.pic_options',
+            300,
+            fn () => ReceivingGood::whereNotNull('verify_by')->distinct()->orderBy('verify_by')->pluck('verify_by')
+        );
+        $lineOptions = \Illuminate\Support\Facades\Cache::remember(
+            'receiving_goods.line_options',
+            300,
+            fn () => Customer::whereNotNull('line')->distinct()->orderBy('line')->pluck('line')
+        );
 
         // Tabel detail dengan pencarian sederhana + pagination.
         $tableQuery = (clone $baseQuery)
@@ -159,6 +187,7 @@ class DashboardController extends Controller
             'totalVerified' => $totalVerified,
             'verifiedByPic' => $verifiedByPic,
             'picBsthpChartData' => $picBsthpChartData,
+            'hourlyArrivalChartData' => $hourlyArrivalChartData,
             'customerByLineChartData' => $customerByLineChartData,
             'topCustomers' => $topCustomers,
             'topItems' => $topItems,
@@ -193,40 +222,91 @@ class DashboardController extends Controller
     }
 
     /**
+     * Hitung jumlah BSTHP (unik) berdasarkan jam kedatangan, diambil dari jam
+     * pada kolom `date_income` (00:00 s.d. 23:00), mengikuti filter tanggal
+     * (dan filter lain) yang sedang aktif lewat $baseQuery.
+     */
+    protected function buildHourlyArrivalChartData($baseQuery): array
+    {
+        $result = (clone $baseQuery)
+            ->whereNotNull('date_income')
+            ->selectRaw('HOUR(date_income) as hour')
+            ->selectRaw('COUNT(DISTINCT bsthp_no) as bsthp_count')
+            ->selectRaw('COUNT(*) as rows_count')
+            ->groupBy('hour')
+            ->orderBy('hour')
+            ->get()
+            ->keyBy('hour');
+
+        $labels = [];
+        $values = [];
+        $rowsCount = [];
+
+        for ($hour = 0; $hour < 24; $hour++) {
+            $row = $result->get($hour);
+
+            $labels[] = sprintf('%02d:00', $hour);
+            $values[] = $row ? (int) $row->bsthp_count : 0;
+            $rowsCount[] = $row ? (int) $row->rows_count : 0;
+        }
+
+        return [
+            'labels' => $labels,
+            'values' => $values,
+            'rows' => $rowsCount,
+        ];
+    }
+
+    /**
      * Hitung jumlah customer (unik) per Line, untuk pie chart "Customer Berdasarkan Line".
      * Customer yang belum punya Line di tabel master dikelompokkan sebagai "Tanpa Line".
      */
     protected function buildCustomerByLineChartData($baseQuery): array
     {
-        $result = (clone $baseQuery)
+        // Satu query yang mengelompokkan (line_group, customer) sekaligus, lalu
+        // di-agregasi di PHP. Sebelumnya kode ini menjalankan 1 query ringkasan
+        // + 1 query tambahan PER line group (N+1) -- pada dataset besar dengan
+        // banyak Line ini adalah salah satu penyebab utama timeout 60 detik.
+        $rows = (clone $baseQuery)
             ->whereNotNull('customer')
             ->leftJoin('customers', 'customers.name', '=', 'receiving_goods.customer')
             ->selectRaw('COALESCE(customers.line, 0) as line_group')
-            ->selectRaw('COUNT(DISTINCT receiving_goods.customer) as jumlah')
+            ->selectRaw('receiving_goods.customer as customer')
             ->selectRaw('COUNT(DISTINCT CASE WHEN receiving_goods.label_barcode_no IS NOT NULL THEN receiving_goods.label_barcode_no END) as total_barcode')
-            ->groupBy('line_group')
-            ->orderByDesc('total_barcode')
-            ->orderBy('line_group')
+            ->groupBy('line_group', 'receiving_goods.customer')
             ->get();
 
+        $groups = [];
+        foreach ($rows as $row) {
+            $lineValue = (int) $row->line_group;
+            if (! isset($groups[$lineValue])) {
+                $groups[$lineValue] = ['customers' => [], 'total_barcode' => 0];
+            }
+            if ($row->customer !== null && $row->customer !== '') {
+                $groups[$lineValue]['customers'][$row->customer] = true;
+            }
+            $groups[$lineValue]['total_barcode'] += (int) $row->total_barcode;
+        }
+
+        // Urutkan sesuai perilaku semula: total_barcode desc, lalu line_group asc.
+        uksort($groups, function ($a, $b) use ($groups) {
+            $cmp = $groups[$b]['total_barcode'] <=> $groups[$a]['total_barcode'];
+            return $cmp !== 0 ? $cmp : ($a <=> $b);
+        });
+
+        $labels = [];
+        $values = [];
+        $totalBarcode = [];
         $details = [];
 
-        foreach ($result as $row) {
-            $lineValue = (int) $row->line_group;
+        foreach ($groups as $lineValue => $data) {
             $label = $lineValue === 0 ? 'Tanpa Line' : 'Line '.$lineValue;
+            $customers = array_values(array_keys($data['customers']));
+            sort($customers);
 
-            $customers = (clone $baseQuery)
-                ->whereNotNull('customer')
-                ->leftJoin('customers', 'customers.name', '=', 'receiving_goods.customer')
-                ->whereRaw('COALESCE(customers.line, 0) = ?', [$lineValue])
-                ->select('receiving_goods.customer')
-                ->distinct()
-                ->orderBy('receiving_goods.customer')
-                ->pluck('receiving_goods.customer')
-                ->filter()
-                ->values()
-                ->all();
-
+            $labels[] = $label;
+            $values[] = count($data['customers']);
+            $totalBarcode[] = $data['total_barcode'];
             $details[] = [
                 'label' => $label,
                 'customers' => $customers,
@@ -234,9 +314,9 @@ class DashboardController extends Controller
         }
 
         return [
-            'labels' => $result->map(fn ($r) => $r->line_group == 0 ? 'Tanpa Line' : 'Line '.$r->line_group)->all(),
-            'values' => $result->pluck('jumlah')->map(fn ($v) => (int) $v)->all(),
-            'total_barcode' => $result->pluck('total_barcode')->map(fn ($v) => (int) $v)->all(),
+            'labels' => $labels,
+            'values' => $values,
+            'total_barcode' => $totalBarcode,
             'details' => $details,
         ];
     }

@@ -13,22 +13,30 @@
 
     {{-- ===================== FILTER ===================== --}}
     <div class="card filter-card sticky-filter mb-4">
-        <div class="card-body">
+        <div class="card-body" style="font-size: 0.80rem;">
+            <button id="filterToggle" type="button"
+                    class="btn btn-outline-secondary w-100 justify-content-between align-items-center mb-0"
+                    data-bs-toggle="collapse" data-bs-target="#filterCollapse"
+                    aria-expanded="false" aria-controls="filterCollapse">
+                <span><i class="bi bi-funnel-fill me-2"></i>Filter Data</span>
+                <i class="bi bi-list fs-5"></i>
+            </button>
+            <div class="collapse filter-collapse-body mt-3 mt-md-0" id="filterCollapse">
             <form method="GET" action="{{ route('dashboard') }}" class="row g-3 align-items-end">
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">Tanggal Dari</label>
                     <input type="date" name="date_from" class="form-control"
-                           value="{{ $filters['date_from'] ?? ($dateFrom?->format('Y-m-d')) }}">
+                           value="{{ $filters['date_from'] ?? ($dateFrom?->format('Y-m-d')) }}" style="font-size: 0.80rem;">
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">Tanggal Sampai</label>
                     <input type="date" name="date_to" class="form-control"
-                           value="{{ $filters['date_to'] ?? ($dateTo?->format('Y-m-d')) }}">
+                           value="{{ $filters['date_to'] ?? ($dateTo?->format('Y-m-d')) }}" style="font-size: 0.80rem;">
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">Customer</label>
-                    <select name="customer" class="form-select">
-                        <option value="">Semua Customer</option>
+                    <select name="customer" class="form-select" style="font-size: 0.80rem;">
+                        <option value="" >Semua Customer</option>
                         @foreach ($customerOptions as $c)
                             <option value="{{ $c->customer }}" @selected(($filters['customer'] ?? '') === $c->customer)>
                                 {{ $c->customer }}{{ $c->line ? ' (Line '.$c->line.')' : '' }}
@@ -38,8 +46,8 @@
                 </div>
                 <div class="col-6 col-md-2">
                     <label class="form-label small text-muted mb-1">PIC Verifikator</label>
-                    <select name="pic" class="form-select">
-                        <option value="">Semua PIC</option>
+                    <select name="pic" class="form-select" style="font-size: 0.80rem;">
+                        <option value="" >Semua PIC</option>
                         @foreach ($picOptions as $p)
                             <option value="{{ $p }}" @selected(($filters['pic'] ?? '') === $p)>{{ $p }}</option>
                         @endforeach
@@ -47,8 +55,8 @@
                 </div>
                 <div class="col-6 col-md-1">
                     <label class="form-label small text-muted mb-1">Line</label>
-                    <select name="line" class="form-select">
-                        <option value="">Semua</option>
+                    <select name="line" class="form-select" style="font-size: 0.80rem;">
+                        <option value="" >Semua Line</option>
                         @foreach ($lineOptions as $l)
                             <option value="{{ $l }}" @selected((string) ($filters['line'] ?? '') === (string) $l)>{{ $l }}</option>
                         @endforeach
@@ -56,7 +64,7 @@
                 </div>
                 <div class="col-12 col-md-2">
                     <label class="form-label small text-muted mb-1">Cari (Code Item / Part / BSTHP / Barcode)</label>
-                    <input type="text" name="q" class="form-control" placeholder="Ketik kata kunci..."
+                    <input type="text" name="q" class="form-control" style="font-size: 0.80rem;" placeholder="Ketik kata kunci..."
                            value="{{ $filters['q'] ?? '' }}">
                 </div>
                 <div class="col-12 col-md-1 d-flex gap-2">
@@ -71,20 +79,32 @@
                     sampai <strong>{{ \Illuminate\Support\Carbon::parse($boundsMax)->translatedFormat('d M Y') }}</strong>.
                 </div>
             @endif
+            </div>
         </div>
     </div>
 
-    <nav class="nav nav-pills flex-nowrap overflow-auto gap-2 mb-4 bg-white p-2 rounded-3 shadow-sm section-nav">
-        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-trends">Tren BSTHP Customer &amp; PIC Verifikator</a>
-        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-pic-bsthp">Jumlah BSTHP Berdasarkan PIC Verifikator</a>
-        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-customer-line">Customer Berdasarkan Line</a>
-        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-top10">Top 10 Customer &amp; Item</a>
-        <a class="nav-link btn btn-sm btn-outline-primary" href="#section-detail-data">Detail data</a>
-    </nav>
+    <div class="mb-4 section-nav-wrapper">
+        <button id="sectionNavToggle" type="button"
+                class="btn btn-outline-secondary w-100 justify-content-between align-items-center rounded-3 shadow-sm mb-2"
+                data-bs-toggle="collapse" data-bs-target="#sectionNavCollapse"
+                aria-expanded="false" aria-controls="sectionNavCollapse">
+            <span><i class="bi bi-list-ul me-2"></i>Navigasi Bagian</span>
+            <i class="bi bi-list fs-5"></i>
+        </button>
+        <nav id="sectionNavCollapse" class="nav nav-pills collapse flex-column flex-md-row flex-md-nowrap overflow-auto gap-2 bg-white p-2 rounded-3 shadow-sm section-nav">
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link active" href="#section-summary" data-section="section-summary" style="font-size: 0.80rem;">Ringkasan</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-trends" data-section="section-trends" style="font-size: 0.80rem;">Tren BSTHP Customer &amp; PIC Verifikator</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-pic-bsthp" data-section="section-pic-bsthp" style="font-size: 0.80rem;">Jumlah BSTHP Berdasarkan PIC Verifikator</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-hourly-arrival" data-section="section-hourly-arrival" style="font-size: 0.80rem;">Jam Kedatangan BSTHP</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-customer-line" data-section="section-customer-line" style="font-size: 0.80rem;">Customer Berdasarkan Line</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-top10" data-section="section-top10" style="font-size: 0.80rem;">Top 10 Customer &amp; Item</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" data-section="section-detail-data" href="#section-detail-data" style="font-size: 0.80rem;">Detail data</a>
+        </nav>
+    </div>
 
     {{-- ===================== SUMMARY CARDS ===================== --}}
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-2">
+    <div class="row g-3 mb-4" id="section-summary">
+        <div class="col-6 col-md-4 col-lg-2">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -97,7 +117,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-md-4 col-lg-2">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -113,7 +133,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-md-4 col-lg-2">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -126,7 +146,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-md-4 col-lg-2">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -140,7 +160,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-md-4 col-lg-2">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -153,7 +173,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-lg-2">
+        <div class="col-6 col-md-4 col-lg-2">
             <div class="card stat-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
@@ -209,19 +229,19 @@
                 <p class="text-muted mb-0">Belum ada data bertanggal untuk ditampilkan pada grafik.</p>
             @else
                 <div class="row g-4">
-                    <div class="col-12 col-lg-4">
+                    <div class="col-12 col-md-6 col-lg-4">
                         <h6 class="text-muted small text-uppercase mb-2">Jumlah BSTHP</h6>
                         <div class="chart-box" style="position: relative; height: 320px; padding-top: 8px;">
                             <canvas id="chartBsthp"></canvas>
                         </div>
                     </div>
-                    <div class="col-12 col-lg-4">
+                    <div class="col-12 col-md-6 col-lg-4">
                         <h6 class="text-muted small text-uppercase mb-2">Jumlah Customer</h6>
                         <div class="chart-box" style="position: relative; height: 320px; padding-top: 8px;">
                             <canvas id="chartCustomer"></canvas>
                         </div>
                     </div>
-                    <div class="col-12 col-lg-4">
+                    <div class="col-12 col-md-6 col-lg-4">
                         <h6 class="text-muted small text-uppercase mb-2">Total Item Terverifikasi</h6>
                         <div class="chart-box" style="position: relative; height: 320px; padding-top: 8px;">
                             <canvas id="chartPic"></canvas>
@@ -243,8 +263,29 @@
             @else
                 <div class="row g-4">
                     <div class="col-12">
-                        <div class="chart-box" style="position: relative; height: 480px; padding-top: 8px;">
+                        <div class="chart-box" style="position: relative; height: 380px; padding-top: 8px;">
                             <canvas id="chartPicBsthp"></canvas>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- ===================== GRAFIK JAM KEDATANGAN BSTHP ===================== --}}
+    <div class="card table-card mb-4" id="section-hourly-arrival">
+        <div class="card-header bg-white fw-semibold">
+            <i class="bi bi-clock-history text-warning"></i> Grafik Jam Kedatangan BSTHP
+        </div>
+        <div class="card-body">
+            @if (empty($hourlyArrivalChartData['labels']) || array_sum($hourlyArrivalChartData['values']) === 0)
+                <p class="text-muted mb-0">Belum ada data jam kedatangan untuk ditampilkan.</p>
+            @else
+                <p class="text-muted small mb-3">Jumlah BSTHP berdasarkan jam pada kolom Date Income, mengikuti filter tanggal di atas.</p>
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="chart-box" style="position: relative; height: 380px; padding-top: 8px;">
+                            <canvas id="chartHourlyArrival"></canvas>
                         </div>
                     </div>
                 </div>
@@ -262,12 +303,12 @@
                 <p class="text-muted mb-0">Belum ada data customer dengan Line untuk ditampilkan.</p>
             @else
                 <div class="row g-4 align-items-center">
-                    <div class="col-12 col-lg-6">
+                    <div class="col-12 col-md-6">
                         <div class="chart-box" style="position: relative; height: 360px;">
                             <canvas id="chartCustomerByLine"></canvas>
                         </div>
                     </div>
-                    <div class="col-12 col-lg-6">
+                    <div class="col-12 col-md-6">
                         <div class="table-responsive" style="max-height: 360px;">
                             <table class="table table-sm table-hover mb-0 align-middle">
                                 <thead>
@@ -314,13 +355,13 @@
     </div>
 
     {{-- ===================== TOP 10 CUSTOMER & ITEM ===================== --}}
-    <div class="row g-4 mb-4" id="section-top10">
+    <div class="row g-4 mb-4" >
         <div class="col-12 col-xl-6">
-            <div class="card table-card h-100">
+            <div class="card table-card h-100" id="section-top10">
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-people-fill text-primary"></i> Top 10 Customer
                 </div>
-                <div class="table-responsive" style="height: 385px; overflow-x: auto; overflow-y: auto; display: block;">
+                <div class="table-responsive top10-table-wrap" data-visible-rows="10" style="font-size: 0.60rem;">
                     <table class="table table-sm table-hover table-striped mb-0 align-middle">
                         <thead class="sticky-th">
                         <tr>
@@ -364,8 +405,8 @@
                 <div class="card-header bg-white fw-semibold">
                     <i class="bi bi-box-seam text-success"></i> Top 10 Item
                 </div>
-                <div class="table-responsive" style="height: 385px; overflow-x: auto; overflow-y: auto; display: block;">
-                    <table class="table table-sm table-hover table-striped mb-0 align-middle">
+                <div class="table-responsive top10-table-wrap" data-visible-rows="10" style="font-size: 0.60rem;">
+                    <table class="table table-sm table-hover table-striped mb-0 align-middle" >
                         <thead class="sticky-th">
                         <tr>
                             <th class="text-center">No</th>
@@ -403,10 +444,11 @@
         <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
             <span><i class="bi bi-table"></i> Detail Data ({{ number_format($rows->total()) }} baris sesuai filter)</span>
         </div>
-        <div class="table-responsive" style="max-height: 65vh;">
-            <table class="table table-sm table-hover table-striped mb-0 align-middle">
+        <div class="table-responsive" style="max-height: 65vh; font-size: 0.60rem;">
+            <table class="table table-sm table-hover table-striped mb-0 align-middle" >
                 <thead class="sticky-th">
                 <tr>
+                    <th>No.</th>
                     <th>Tanggal Terima</th>
                     <th>No. BSTHP</th>
                     <th>PIC Verifikasi</th>
@@ -423,6 +465,7 @@
                 <tbody>
                 @forelse ($rows as $row)
                     <tr>
+                        <td class="text-center">{{ $rows->firstItem() + $loop->index }}</td>
                         <td class="text-nowrap">{{ $row->date_income?->format('d-m-Y H:i') }}</td>
                         <td class="text-nowrap">{{ $row->bsthp_no }}</td>
                         <td>{{ $row->verify_by }}</td>
@@ -464,6 +507,7 @@
 
         const chartData = @json($chartData);
         const picBsthpChartData = @json($picBsthpChartData);
+        const hourlyArrivalChartData = @json($hourlyArrivalChartData);
         const customerByLineChartData = @json($customerByLineChartData);
 
         const periodLabelFormatters = {
@@ -487,7 +531,7 @@
         };
 
         let currentPeriod = 'day';
-        let chartBsthp, chartCustomer, chartPic, chartPicBsthp, chartPicBsthpPie, chartCustomerByLine;
+        let chartBsthp, chartCustomer, chartPic, chartPicBsthp, chartPicBsthpPie, chartHourlyArrival, chartCustomerByLine;
 
         /**
          * Palet warna konsisten untuk tiap PIC (dipakai bareng oleh bar & pie chart).
@@ -575,6 +619,51 @@
                                 return pct >= 4 ? pct.toFixed(0) + '%' : '';
                             },
                         },
+                    },
+                },
+            });
+        }
+
+        function buildHourlyArrivalChart() {
+            const ctx = document.getElementById('chartHourlyArrival');
+            if (!ctx || !hourlyArrivalChartData.labels?.length) return;
+
+            if (chartHourlyArrival) chartHourlyArrival.destroy();
+
+            chartHourlyArrival = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: hourlyArrivalChartData.labels,
+                    datasets: [{
+                        label: 'Jumlah BSTHP',
+                        data: hourlyArrivalChartData.values,
+                        backgroundColor: '#fd7e14',
+                        borderRadius: 4,
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (value) => value > 0 ? Number(value).toLocaleString('id-ID') : '',
+                        },
+                    }],
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { clip: false },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: (item) => {
+                                    const rows = hourlyArrivalChartData.rows?.[item.dataIndex];
+                                    return rows !== undefined ? `Jumlah item: ${Number(rows).toLocaleString('id-ID')}` : '';
+                                },
+                            },
+                        },
+                    },
+                    layout: { padding: { top: 16, bottom: 8 } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0 } },
+                        x: { ticks: { autoSkip: false, maxRotation: 0 } },
                     },
                 },
             });
@@ -715,6 +804,32 @@
             });
         }
 
+        document.querySelectorAll('.section-nav-link').forEach((link) => {
+            link.addEventListener('click', () => {
+                document.querySelectorAll('.section-nav-link').forEach((item) => {
+                    item.classList.remove('active', 'btn-primary');
+                    item.classList.add('btn-outline-primary');
+                });
+                link.classList.remove('btn-outline-primary');
+                link.classList.add('active', 'btn-primary');
+            });
+        });
+
+        const sectionLinks = Array.from(document.querySelectorAll('.section-nav-link'));
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                sectionLinks.forEach((link) => {
+                    const isActive = link.dataset.section === entry.target.id;
+                    link.classList.toggle('active', isActive);
+                    link.classList.toggle('btn-primary', isActive);
+                    link.classList.toggle('btn-outline-primary', !isActive);
+                });
+            });
+        }, { rootMargin: '-30% 0px -55% 0px', threshold: 0.1 });
+
+        document.querySelectorAll('[id^="section-"]').forEach((section) => sectionObserver.observe(section));
+
         document.querySelectorAll('#chartPeriodToggle button').forEach((btn) => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('#chartPeriodToggle button').forEach((b) => b.classList.remove('active'));
@@ -734,6 +849,10 @@
 
         if (document.getElementById('chartPicBsthpPie')) {
             buildPicBsthpPieChart();
+        }
+
+        if (document.getElementById('chartHourlyArrival')) {
+            buildHourlyArrivalChart();
         }
 
         if (document.getElementById('chartCustomerByLine')) {

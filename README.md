@@ -29,6 +29,30 @@ Fitur:
 - Mode upload: **Tambah/Perbarui** (tidak menggandakan data jika file diupload
   ulang) atau **Ganti Semua Data**.
 
+### Menu Balance Retur (baru)
+
+Menu **"Balance Retur"** di navbar menyediakan dashboard terpisah untuk
+memonitor data **Monitoring Balance Retur** (dari file Excel `.xlsx`):
+
+- Filter berdasarkan **rentang tanggal** (Date Retur), **Customer**, **Final
+  Status** (CLOSE/OPEN), dan pencarian bebas.
+- Kartu ringkasan: **Total Retur** (No. Retur unik), **Total Customer**,
+  **Total Code Item**, **Total Qty Retur**, **Qty Receiving Part** (+ jumlah
+  status CLOSE/OPEN), **Qty Delivery Part** (+ jumlah status CLOSE/OPEN), dan
+  jumlah **Final Status** CLOSE/OPEN.
+- **Grafik tren** (Harian/Bulanan/Tahunan) untuk jumlah Retur, jumlah
+  Customer, jumlah Code Item, dan total Qty Retur.
+- **Grafik doughnut** proporsi Status Receiving, Status Delivery, dan Final
+  Status.
+- **Grafik & tabel Top 10 Customer**, **Top 10 Code Item** (berdasarkan total
+  Qty Retur), dan **Top 10 PIC PPIC Delivery** (berdasarkan total Qty
+  Delivery, lengkap dengan rincian jumlah status CLOSE/OPEN).
+- Tabel detail data dengan pencarian & pagination.
+- **Upload data** lewat menu **"Upload Retur"** — cukup upload file export
+  `.xlsx`/`.xls` "Monitoring Balance Retur" apa adanya. Mode upload sama
+  seperti menu Receiving Goods: **Tambah/Perbarui** atau **Ganti Semua Data**
+  (baris dengan No. Retur + Code Item yang sama otomatis diperbarui).
+
 ---
 
 ## 1. Persyaratan
@@ -53,6 +77,10 @@ Fitur:
    ```
    composer install
    ```
+   > Jika perintah di atas menampilkan error terkait `composer.lock` (mis.
+   > "lock file is not up to date"), jalankan `composer update` sekali saja
+   > agar dependency baru untuk menu Balance Retur (`phpoffice/phpspreadsheet`)
+   > ikut ter-download dan `composer.lock` diperbarui.
 
 3. **Salin file environment**:
    ```
@@ -94,13 +122,18 @@ Jika Anda sudah menjalankan aplikasi ini sebelumnya dan sudah punya data,
 cukup jalankan 2 perintah berikut setelah menarik/menyalin kode terbaru:
 
 ```
+composer update
 php artisan migrate
 php artisan db:seed --class=CustomerLineSeeder
 ```
 
+- `composer update` diperlukan (bukan `composer install`) karena menu
+  **Balance Retur** menambahkan dependency baru (`phpoffice/phpspreadsheet`)
+  yang belum ada di `composer.lock` versi sebelumnya.
 - `migrate` akan membuat tabel `customers` baru **dan** merapikan spasi ganda
   pada nama customer di data lama (mis. `"ROKI  INDONESIA, PT."` menjadi
-  `"ROKI INDONESIA, PT."`) supaya cocok dengan tabel Line.
+  `"ROKI INDONESIA, PT."`), serta membuat tabel `balance_returs` untuk menu
+  Balance Retur.
 - `db:seed --class=CustomerLineSeeder` mengisi 117 pasangan Customer & Line.
 
 ---
@@ -139,6 +172,18 @@ php artisan import:receiving-goods "contoh-data/Receiving_Goods_Monitoring__32_.
 ```
 Tambahkan `--replace` di akhir perintah untuk mengganti semua data lama.
 
+### Mengisi Data Balance Retur
+
+Buka menu **"Upload Retur"** di navbar, lalu upload file export "Monitoring
+Balance Retur" (`.xlsx`/`.xls`). Sudah disediakan contoh file di
+`contoh-data/Monitoring_Balance_Retur.xlsx` untuk uji coba pertama.
+
+**Alternatif via terminal**:
+```
+php artisan import:balance-retur "contoh-data/Monitoring_Balance_Retur.xlsx"
+```
+Tambahkan `--replace` di akhir perintah untuk mengganti semua data lama.
+
 ---
 
 ## 6. Struktur Data yang Terbaca
@@ -155,6 +200,17 @@ master `customers` (nama & Line) yang di-seed dari `CustomerLineSeeder`. Jika
 ada customer baru yang belum punya Line, tambahkan lewat phpMyAdmin pada
 tabel `customers`, atau edit `database/seeders/CustomerLineSeeder.php` lalu
 jalankan ulang `php artisan db:seed --class=CustomerLineSeeder`.
+
+Importer **Balance Retur** membaca file Excel `.xlsx`/`.xls` dengan baris
+judul di baris 1, header kolom di baris 2, dan data mulai baris 3, dengan
+urutan kolom: No, Date Retur, No Retur, Rev No, No From Customer, Customer
+Name, Code Item, Part No, Part Name, Model, Product Status, QTY Retur, Unit,
+QTY Receiving Part, QTY Pending Receiving Part, Status, QTY Delivery Part,
+QTY Pending Delivery Part, Status, Stock Realtime, Final Status, Note, PIC
+PPIC DELIVERY — persis seperti pada file `Monitoring_Balance_Retur.xlsx` yang
+Anda berikan. Baris tanpa No Retur atau Code Item akan dilewati. Jika format
+export berubah struktur kolomnya, sesuaikan urutan kolom di
+`app/Services/BalanceReturImporter.php`.
 
 ---
 
