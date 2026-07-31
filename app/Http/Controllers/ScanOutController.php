@@ -136,11 +136,15 @@ class ScanOutController extends Controller
             300,
             fn () => ScanOut::whereNotNull('scan_by_name')->distinct()->orderBy('scan_by_name')->pluck('scan_by_name')
         );
-        $lineOptions = \Illuminate\Support\Facades\Cache::remember(
-            'scan_out.line_options',
-            300,
-            fn () => DB::table('row_locations')->whereNotNull('line_label')->distinct()->orderBy('line')->pluck('line_label')
-        );
+       $lineOptions = \Illuminate\Support\Facades\Cache::remember(
+    'scan_out.line_options',
+    300,
+    fn () => DB::table('row_locations')
+        ->whereNotNull('line_label')
+        ->groupBy('line_label')
+        ->orderBy('line_label')
+        ->pluck('line_label')
+);
 
         // Tabel detail dengan pencarian sederhana + pagination.
         $rows = (clone $baseQuery)->with('rowLocationMaster')->orderByDesc('scan_date')->paginate(25)->withQueryString();
