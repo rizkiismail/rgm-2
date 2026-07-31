@@ -115,7 +115,7 @@
             <span><i class="bi bi-list-ul me-2"></i>Navigasi Bagian</span>
             <i class="bi bi-list fs-5"></i>
         </button>
-        <nav id="sectionNavCollapse" style="font-size: 0.80rem;" class="nav nav-pills collapse flex-column flex-md-row flex-md-nowrap overflow-auto gap-2 bg-white p-2 rounded-3 shadow-sm section-nav">
+        <nav id="sectionNavCollapse" style="font-size: 0.70rem;" class="nav nav-pills collapse flex-column flex-md-row flex-md-nowrap overflow-auto gap-2 bg-white p-2 rounded-3 shadow-sm section-nav">
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link active" href="#section-summary" data-section="section-summary">Ringkasan</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-trends" data-section="section-trends">Tren Scan Out, Customer &amp; Code Item</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-outgoing-pic" data-section="section-outgoing-pic">Outgoing Type &amp; PIC Scan</a>
