@@ -167,10 +167,22 @@ class DashboardController extends Controller
 
         // Data grafik tren (Harian / Bulanan / Tahunan) untuk BSTHP, Customer, dan PIC Verifikator.
         // Dihitung sekali untuk ketiga periode sekaligus supaya toggle di frontend tidak perlu reload halaman.
+        //
+        // Sebelumnya periode dihitung dengan DATE_FORMAT(date_income, ...) di
+        // SELECT/GROUP BY. Membungkus date_income dengan fungsi membuat index
+        // pada kolom itu tidak terpakai, jadi ketiga query ini masing-masing
+        // full table scan (3x scan tabel yang sama, masing-masing dengan 3x
+        // COUNT DISTINCT) -- salah satu penyebab utama timeout 60 detik.
+        // Sekarang memakai kolom generated (date_income_date / _month / _year)
+        // yang sudah diindex, sehingga tiap query bisa memakai index scan.
+        // (Query tetap dipisah per periode, bukan digabung jadi satu, karena
+        // COUNT(DISTINCT ...) harian tidak bisa dijumlahkan begitu saja
+        // menjadi COUNT(DISTINCT ...) bulanan/tahunan tanpa berpotensi salah
+        // hitung -- roll-up seperti itu hanya benar untuk COUNT(*)/SUM.)
         $chartData = [
-            'day' => $this->buildChartSeries($baseQuery, "DATE_FORMAT(date_income, '%Y-%m-%d')"),
-            'month' => $this->buildChartSeries($baseQuery, "DATE_FORMAT(date_income, '%Y-%m')"),
-            'year' => $this->buildChartSeries($baseQuery, "DATE_FORMAT(date_income, '%Y')"),
+            'day' => $this->buildChartSeries($baseQuery, 'date_income_date'),
+            'month' => $this->buildChartSeries($baseQuery, 'date_income_month'),
+            'year' => $this->buildChartSeries($baseQuery, 'date_income_year'),
         ];
 
         return view('dashboard', [
@@ -228,13 +240,18 @@ class DashboardController extends Controller
      */
     protected function buildHourlyArrivalChartData($baseQuery): array
     {
+        // Dulu memakai HOUR(date_income) di SELECT/GROUP BY, yang membungkus
+        // kolom dengan fungsi sehingga index pada date_income tidak terpakai
+        // (full table scan). Sekarang memakai kolom generated
+        // `date_income_hour` yang sudah diindex, supaya MySQL bisa memakai
+        // index scan.
         $result = (clone $baseQuery)
             ->whereNotNull('date_income')
-            ->selectRaw('HOUR(date_income) as hour')
+            ->select('date_income_hour as hour')
             ->selectRaw('COUNT(DISTINCT bsthp_no) as bsthp_count')
             ->selectRaw('COUNT(*) as rows_count')
-            ->groupBy('hour')
-            ->orderBy('hour')
+            ->groupBy('date_income_hour')
+            ->orderBy('date_income_hour')
             ->get()
             ->keyBy('hour');
 
@@ -323,19 +340,21 @@ class DashboardController extends Controller
 
     /**
      * Hitung tren jumlah BSTHP (unik), Customer (unik), dan item yang diverifikasi PIC
-     * dikelompokkan berdasarkan ekspresi periode (harian/bulanan/tahunan).
+     * dikelompokkan berdasarkan kolom periode (date_income_date / _month / _year,
+     * semuanya generated column yang sudah diindex -- lihat migration
+     * add_date_parts_to_receiving_goods_table).
      */
-    protected function buildChartSeries($baseQuery, string $periodExpr): array
+    protected function buildChartSeries($baseQuery, string $periodColumn): array
     {
         $result = (clone $baseQuery)
             ->whereNotNull('date_income')
-            ->selectRaw("{$periodExpr} as period")
+            ->select("{$periodColumn} as period")
             ->selectRaw('COUNT(DISTINCT bsthp_no) as bsthp_count')
             ->selectRaw('COUNT(DISTINCT customer) as customer_count')
             ->selectRaw('COUNT(DISTINCT verify_by) as pic_count')
             ->selectRaw('SUM(CASE WHEN verify_by IS NOT NULL THEN 1 ELSE 0 END) as verified_count')
-            ->groupBy('period')
-            ->orderBy('period')
+            ->groupBy($periodColumn)
+            ->orderBy($periodColumn)
             ->get();
 
         return [

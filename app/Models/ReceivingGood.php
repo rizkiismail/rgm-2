@@ -35,6 +35,14 @@ class ReceivingGood extends Model
     ];
 
     /**
+     * date_income_date, date_income_month, date_income_year, date_income_hour
+     * adalah generated column (STORED) yang dihitung otomatis oleh database
+     * dari date_income. Sengaja TIDAK dimasukkan ke $fillable karena tidak
+     * boleh di-set manual; dipakai supaya query GROUP BY di dashboard bisa
+     * memakai index langsung tanpa membungkus date_income dengan fungsi.
+     */
+
+    /**
      * Data master customer (nama & line) yang cocok dengan kolom `customer` di sini.
      */
     public function customerLine()

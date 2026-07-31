@@ -92,13 +92,13 @@
             <i class="bi bi-list fs-5"></i>
         </button>
         <nav id="sectionNavCollapse" class="nav nav-pills collapse flex-column flex-md-row flex-md-nowrap overflow-auto gap-2 bg-white p-2 rounded-3 shadow-sm section-nav">
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link active" href="#section-summary" data-section="section-summary" style="font-size: 0.80rem;">Ringkasan</a>
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-trends" data-section="section-trends" style="font-size: 0.80rem;">Tren BSTHP Customer &amp; PIC Verifikator</a>
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-pic-bsthp" data-section="section-pic-bsthp" style="font-size: 0.80rem;">Jumlah BSTHP Berdasarkan PIC Verifikator</a>
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-hourly-arrival" data-section="section-hourly-arrival" style="font-size: 0.80rem;">Jam Kedatangan BSTHP</a>
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-customer-line" data-section="section-customer-line" style="font-size: 0.80rem;">Customer Berdasarkan Line</a>
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-top10" data-section="section-top10" style="font-size: 0.80rem;">Top 10 Customer &amp; Item</a>
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" data-section="section-detail-data" href="#section-detail-data" style="font-size: 0.80rem;">Detail data</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link active" href="#section-summary" data-section="section-summary" style="font-size: 0.70rem;">Ringkasan</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-trends" data-section="section-trends" style="font-size: 0.70rem;">Tren BSTHP Customer &amp; PIC Verifikator</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-pic-bsthp" data-section="section-pic-bsthp" style="font-size: 0.70rem;">Jumlah BSTHP Berdasarkan PIC Verifikator</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-hourly-arrival" data-section="section-hourly-arrival" style="font-size: 0.70rem;">Jam Kedatangan BSTHP</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-customer-line" data-section="section-customer-line" style="font-size: 0.70rem;">Customer Berdasarkan Line</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-top10" data-section="section-top10" style="font-size: 0.70rem;">Top 10 Customer &amp; Item</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" data-section="section-detail-data" href="#section-detail-data" style="font-size: 0.70rem;">Detail data</a>
         </nav>
     </div>
 
@@ -655,7 +655,7 @@
                             callbacks: {
                                 afterLabel: (item) => {
                                     const rows = hourlyArrivalChartData.rows?.[item.dataIndex];
-                                    return rows !== undefined ? `Jumlah item: ${Number(rows).toLocaleString('id-ID')}` : '';
+                                    return rows !== undefined ? `Jumlah barcode: ${Number(rows).toLocaleString('id-ID')}` : '';
                                 },
                             },
                         },
