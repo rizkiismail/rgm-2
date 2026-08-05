@@ -6,6 +6,7 @@
     <title>@yield('title', 'Monitoring Receiving Goods')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="icon" type="image/x-icon" href="logo-kps.png">
     <style>
         :root {
             color-scheme: light;
@@ -289,7 +290,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 app-navbar">
     <div class="container-fluid px-3 px-md-4">
         <a class="navbar-brand" href="{{ route('dashboard') }}">
-            <i class="bi bi-box-seam-fill me-1"></i>
+            <img src="logo-kps.png" class="img-fluid me-2" alt="Logo KPS" style="height: 30px; width: 25px;">
             @if (request()->routeIs('retur.dashboard') || request()->routeIs('retur.import.form'))
                 Monitoring Balance Retur
             @elseif (request()->routeIs('scanout.dashboard') || request()->routeIs('scanout.import.form'))
