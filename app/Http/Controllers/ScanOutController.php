@@ -118,6 +118,8 @@ class ScanOutController extends Controller
             'values' => $topCodeItems->pluck('jumlah_scan')->map(fn ($v) => (int) $v)->all(),
         ];
 
+        $hourlyScanChartData = $this->buildHourlyScanChartData($baseQuery);
+
         // Daftar dropdown filter (dari seluruh data, bukan hasil filter).
         // Di-cache singkat karena query ini tidak bergantung pada filter tapi tadinya
         // dijalankan ulang (full scan) di setiap request.
@@ -185,6 +187,7 @@ class ScanOutController extends Controller
             'outgoingTypeOptions' => $outgoingTypeOptions,
             'picOptions' => $picOptions,
             'lineOptions' => $lineOptions,
+            'hourlyScanChartData' => $hourlyScanChartData,
             'rows' => $rows,
             'filters' => $request->only(['date_from', 'date_to', 'customer', 'outgoing_type', 'pic', 'line', 'q']),
             'hasData' => ScanOut::query()->exists(),
@@ -193,7 +196,37 @@ class ScanOutController extends Controller
     }
 
     /**
-     * Export Ringkasan (Summary Cards) beserta tabel Detail Data ke file Excel,
+     * Hitung jumlah Scan Out berdasarkan jam scan_date (00:00 s.d. 23:00), mengikuti
+     * filter tanggal pada dashboard.
+     */
+    protected function buildHourlyScanChartData($baseQuery): array
+    {
+        $result = (clone $baseQuery)
+            ->whereNotNull('scan_date')
+            ->selectRaw('HOUR(scan_date) as hour')
+            ->selectRaw('COUNT(*) as scan_count')
+            ->groupBy(DB::raw('HOUR(scan_date)'))
+            ->orderBy('hour')
+            ->get()
+            ->keyBy('hour');
+
+        $labels = [];
+        $values = [];
+
+        for ($hour = 0; $hour < 24; $hour++) {
+            $row = $result->get($hour);
+            $labels[] = sprintf('%02d:00', $hour);
+            $values[] = $row ? (int) $row->scan_count : 0;
+        }
+
+        return [
+            'labels' => $labels,
+            'values' => $values,
+        ];
+    }
+
+    /**
+     * Hitung jumlah outgoing (No. Outgoing unik) untuk setiap Outgoing Type.
      * mengikuti filter yang sedang aktif pada dashboard (tanpa pagination).
      */
     public function export(Request $request)

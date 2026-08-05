@@ -119,6 +119,7 @@
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link active" href="#section-summary" data-section="section-summary">Ringkasan</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-trends" data-section="section-trends">Tren Scan Out, Customer &amp; Code Item</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-outgoing-pic" data-section="section-outgoing-pic">Outgoing Type &amp; PIC Scan</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-hourly-scan" data-section="section-hourly-scan">Jam Scan Out</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-line-chart" data-section="section-line-chart">Line Chart</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-top10" data-section="section-top10">Top 10 Customer &amp; Code Item</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-detail-data" data-section="section-detail-data">Detail Data</a>
@@ -323,7 +324,22 @@
         </div>
     </div>
 
-   
+    {{-- ===================== GRAFIK JAM SCAN OUT ===================== --}}
+    <div class="card table-card mb-4" id="section-hourly-scan">
+        <div class="card-header bg-white fw-semibold">
+            <i class="bi bi-clock-history text-warning"></i> Grafik Jam Scan Out
+        </div>
+        <div class="card-body">
+            @if (empty($hourlyScanChartData['labels']) || array_sum($hourlyScanChartData['values']) === 0)
+                <p class="text-muted mb-0">Belum ada data jam scan untuk ditampilkan.</p>
+            @else
+                <p class="text-muted small mb-3">Jumlah Scan Out berdasarkan jam pada kolom Scan Date, mengikuti filter tanggal di atas.</p>
+                <div class="chart-box" style="position: relative; height: 360px; padding-top: 8px;">
+                    <canvas id="chartHourlyScan"></canvas>
+                </div>
+            @endif
+        </div>
+    </div>
 
     {{-- ===================== TOP 10 CUSTOMER & CODE ITEM ===================== --}}
     <div class="row g-4 mb-4">
@@ -493,6 +509,7 @@
         const lineChartData = @json($lineChartData);
         const topCustomerChartData = @json($topCustomerChartData);
         const topCodeItemChartData = @json($topCodeItemChartData);
+        const hourlyScanChartData = @json($hourlyScanChartData);
 
         const commonOptions = {
             responsive: true,
@@ -506,7 +523,7 @@
 
         let currentPeriod = 'day';
         let chartScanOut, chartCustomer, chartCodeItem, chartQty;
-        let chartOutgoingType, chartPicScan, chartTopCustomer, chartTopCodeItem, chartLine;
+        let chartOutgoingType, chartPicScan, chartHourlyScan, chartTopCustomer, chartTopCodeItem, chartLine;
 
         function buildTrendCharts(period) {
             const d = chartData[period];
@@ -677,6 +694,33 @@
             });
         }
 
+        function buildHourlyScanChart() {
+            const ctx = document.getElementById('chartHourlyScan');
+            if (!ctx || !hourlyScanChartData.labels?.length) return;
+
+            chartHourlyScan = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: hourlyScanChartData.labels,
+                    datasets: [{
+                        label: 'Jumlah Scan Out',
+                        data: hourlyScanChartData.values,
+                        backgroundColor: '#fd7e14',
+                        borderRadius: 4,
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (value) => Number(value).toLocaleString('id-ID'),
+                        },
+                    }],
+                },
+                options: {
+                    ...commonOptions,
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                },
+            });
+        }
+
         function buildLineChart() {
             const ctx = document.getElementById('chartLine');
             if (!ctx || !lineChartData.labels?.length) return;
@@ -818,6 +862,7 @@
 
         buildOutgoingTypeChart();
         buildPicScanChart();
+        buildHourlyScanChart();
         buildLineChart();
         buildTopCharts();
     </script>
