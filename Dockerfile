@@ -11,15 +11,6 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install gd pdo_mysql zip
 
-# Increase upload/post size limits
-RUN { \
-    echo 'upload_max_filesize=64M'; \
-    echo 'post_max_size=64M'; \
-    echo 'max_execution_time=300'; \
-    echo 'max_input_time=300'; \
-    echo 'memory_limit=256M'; \
-    } > /usr/local/etc/php/conf.d/uploads.ini
-
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
