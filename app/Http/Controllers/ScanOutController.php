@@ -25,10 +25,14 @@ class ScanOutController extends Controller
         $outgoingTypeCount = $summary['outgoingTypeCount'];
 
         // ===================== GRAFIK TREN (Harian/Bulanan/Tahunan) =====================
+        // Memakai kolom generated (scan_date_date / _month / _year) yang sudah
+        // diindex, bukan DATE_FORMAT(scan_date, ...) -- membungkus kolom dengan
+        // fungsi membuat index pada scan_date tidak terpakai (full table scan).
+        // Lihat migration add_date_parts_to_scan_outs_table.
         $chartData = [
-            'day' => $this->buildChartSeries($baseQuery, "DATE_FORMAT(scan_date, '%Y-%m-%d')"),
-            'month' => $this->buildChartSeries($baseQuery, "DATE_FORMAT(scan_date, '%Y-%m')"),
-            'year' => $this->buildChartSeries($baseQuery, "DATE_FORMAT(scan_date, '%Y')"),
+            'day' => $this->buildChartSeries($baseQuery, 'scan_date_date'),
+            'month' => $this->buildChartSeries($baseQuery, 'scan_date_month'),
+            'year' => $this->buildChartSeries($baseQuery, 'scan_date_year'),
         ];
 
         // ===================== PIE CHART: OUTGOING TYPE =====================
@@ -201,12 +205,14 @@ class ScanOutController extends Controller
      */
     protected function buildHourlyScanChartData($baseQuery): array
     {
+        // Memakai kolom generated scan_date_hour yang sudah diindex, bukan
+        // HOUR(scan_date) -- lihat migration add_date_parts_to_scan_outs_table.
         $result = (clone $baseQuery)
             ->whereNotNull('scan_date')
-            ->selectRaw('HOUR(scan_date) as hour')
+            ->select('scan_date_hour as hour')
             ->selectRaw('COUNT(*) as scan_count')
-            ->groupBy(DB::raw('HOUR(scan_date)'))
-            ->orderBy('hour')
+            ->groupBy('scan_date_hour')
+            ->orderBy('scan_date_hour')
             ->get()
             ->keyBy('hour');
 
