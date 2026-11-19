@@ -230,3 +230,21 @@ export berubah struktur kolomnya, sesuaikan urutan kolom di
   `post_max_size` di `php.ini` XAMPP (misal jadi `64M`), lalu restart Apache.
 - **Tabel kosong setelah upload**: pastikan file yang diupload memang hasil
   export "Monitoring Receiving Goods" dengan struktur tabel `id="resultData"`.
+
+- **Error "Maximum execution time of 60 seconds exceeded"** (data ratusan ribu baris):
+  - Dashboard Receiving Goods membaca tabel ringkasan `receiving_goods_rollup`
+    (jauh lebih kecil dari `receiving_goods`), bukan tabel utama. Tabel ini dibuat
+    oleh `php artisan migrate` dan diperbarui otomatis setiap upload.
+    Jika dashboard menampilkan pesan "Tabel ringkasan ... belum dibuat/terisi",
+    jalankan `php artisan migrate` lalu `php artisan rollup:rebuild`.
+  - Hasil dashboard juga di-cache (30 menit) dan otomatis dibuang saat ada upload.
+  - Catatan: "Jumlah Barcode" dihitung dari jumlah pasangan BSTHP + Label Barcode.
+    Jika label yang sama muncul di dua BSTHP berbeda, angkanya bisa lebih besar
+    sedikit (sekitar 0,005% pada data contoh) dibanding hitungan label unik murni.
+  - XAMPP: naikkan `innodb_buffer_pool_size=512M` di `xampp/mysql/bin/my.ini`
+    (bawaan XAMPP sangat kecil) lalu restart MySQL; dan `max_execution_time=300`
+    di `xampp/php/php.ini`.
+  - Pada Vercel, batas 60 detik berasal dari `maxDuration` di `vercel.json` dan
+    request body maksimal ±4,5 MB. File export besar (belasan MB) jangan diupload
+    lewat web; jalankan dari komputer yang terhubung ke database yang sama:
+    `php artisan import:receiving-goods "path/file.xls"`.

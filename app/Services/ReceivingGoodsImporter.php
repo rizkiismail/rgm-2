@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use DOMDocument;
-use DOMXPath;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ReceivingGoodsImporter
 {
@@ -37,6 +37,11 @@ class ReceivingGoodsImporter
      */
     public function importFromFile(string $filePath, string $batchLabel, bool $truncateFirst = false): array
     {
+        // File export bisa belasan MB (puluhan ribu baris); jangan sampai kena
+        // batas max_execution_time / memory_limit bawaan PHP.
+        @set_time_limit(0);
+        @ini_set('memory_limit', '1024M');
+
         $html = file_get_contents($filePath);
 
         if ($html === false || trim($html) === '') {
@@ -44,6 +49,7 @@ class ReceivingGoodsImporter
         }
 
         $rows = $this->parseRows($html);
+        unset($html); // bebaskan memori (file bisa >16MB)
 
         if (count($rows) === 0) {
             throw new \RuntimeException(
@@ -59,8 +65,16 @@ class ReceivingGoodsImporter
         $inserted = 0;
         $skipped = 0;
         $now = now();
+        $minDate = null; // rentang tanggal data yang diimport, untuk memperbarui ringkasan
+        $maxDate = null;
 
-        foreach (array_chunk($rows, 500) as $chunk) {
+        // Satu transaksi untuk seluruh import: jauh lebih cepat daripada commit
+        // per-batch (tiap commit memaksa flush ke disk, apalagi tabel ini punya
+        // banyak index + generated column).
+        DB::beginTransaction();
+
+        try {
+        foreach (array_chunk($rows, 1000) as $chunk) {
             $records = [];
 
             foreach ($chunk as $row) {
@@ -71,9 +85,15 @@ class ReceivingGoodsImporter
                 }
 
                 $data = array_combine($this->columns, $row);
+                $dateIncome = $this->toDateTime($data['date_income']);
+                if ($dateIncome !== null) {
+                    $minDate = $minDate === null || $dateIncome < $minDate ? $dateIncome : $minDate;
+                    $maxDate = $maxDate === null || $dateIncome > $maxDate ? $dateIncome : $maxDate;
+                }
+
                 $records[] = [
                     'source_no' => $this->toInt($data['source_no']),
-                    'date_income' => $this->toDateTime($data['date_income']),
+                    'date_income' => $dateIncome,
                     'bsthp_date' => $this->toDateTime($data['bsthp_date']),
                     'bsthp_no' => $this->toNullableString($data['bsthp_no']),
                     'verify_no' => $this->toNullableString($data['verify_no']),
@@ -109,6 +129,28 @@ class ReceivingGoodsImporter
             }
         }
 
+        DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            throw $e;
+        }
+
+        // Perbarui tabel ringkasan dashboard: seluruhnya jika mode "Ganti Semua Data",
+        // selain itu hanya rentang tanggal yang ada di file ini.
+        if (Schema::hasTable('receiving_goods_rollup')) {
+            $rollup = app(ReceivingGoodsRollup::class);
+
+            if ($truncateFirst) {
+                $rollup->rebuild();
+            } elseif ($minDate !== null) {
+                $rollup->rebuild(substr($minDate, 0, 10), substr($maxDate, 0, 10));
+            }
+        }
+
+        // Naikkan versi data supaya cache hasil dashboard otomatis tidak terpakai lagi.
+        Cache::forever('receiving_goods.data_version', (string) microtime(true));
+
         return [
             'inserted' => $inserted,
             'skipped' => $skipped,
@@ -119,39 +161,55 @@ class ReceivingGoodsImporter
     /**
      * Ambil semua baris <tr><td>...</td></tr> dari tabel data (id="resultData").
      *
+     * Sengaja TIDAK memakai DOMDocument/DOMXPath: membangun DOM untuk file HTML
+     * 16MB+ (puluhan ribu baris) sangat lambat dan boros memori, dan itu salah
+     * satu penyebab "Maximum execution time of 60 seconds exceeded". Di sini
+     * HTML dipindai langsung dengan strpos/regex kecil per baris (linear).
+     *
      * @return array<int, array<int, string>>
      */
     protected function parseRows(string $html): array
     {
-        $dom = new DOMDocument();
-        libxml_use_internal_errors(true);
-        // Encoding file export ini umumnya UTF-8; paksa DOMDocument membacanya sebagai UTF-8.
-        $dom->loadHTML('<?xml encoding="utf-8" ?>'.$html, LIBXML_NOERROR | LIBXML_NOWARNING);
-        libxml_clear_errors();
+        $endTag = '</tbody>';
+        $start = strpos($html, 'id="resultData"');
 
-        $xpath = new DOMXPath($dom);
+        if ($start === false) {
+            // Fallback: tabel terakhir pada file.
+            $start = strripos($html, '<table');
+            $endTag = '</table>';
 
-        // Cari tbody#resultData; jika tidak ketemu, fallback ke tabel data ke-2.
-        $body = $xpath->query('//tbody[@id="resultData"]')->item(0);
-
-        if ($body === null) {
-            $tables = $xpath->query('//table');
-            $body = $tables->length > 1 ? $tables->item($tables->length - 1) : null;
+            if ($start === false) {
+                return [];
+            }
         }
 
-        if ($body === null) {
-            return [];
-        }
+        $end = stripos($html, $endTag, $start);
+        $segment = $end === false ? substr($html, $start) : substr($html, $start, $end - $start);
 
         $rows = [];
-        foreach ($xpath->query('.//tr', $body) as $tr) {
+        $pos = 0;
+
+        while (($trStart = stripos($segment, '<tr', $pos)) !== false) {
+            $trEnd = stripos($segment, '</tr>', $trStart);
+            if ($trEnd === false) {
+                break;
+            }
+
+            $tr = substr($segment, $trStart, $trEnd - $trStart);
+            $pos = $trEnd + 5;
+
+            if (! preg_match_all('~<td\b[^>]*>(.*?)</td>~is', $tr, $matches)) {
+                continue;
+            }
+
             $cells = [];
-            foreach ($xpath->query('.//td', $tr) as $td) {
-                $cells[] = trim($td->textContent);
+            foreach ($matches[1] as $td) {
+                $text = html_entity_decode(strip_tags($td), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                // trim juga non-breaking space (\xC2\xA0) yang tidak dibuang trim() biasa.
+                $cells[] = preg_replace('/^[\s\x{00A0}]+|[\s\x{00A0}]+$/u', '', $text) ?? trim($text);
             }
-            if (count($cells) > 0) {
-                $rows[] = $cells;
-            }
+
+            $rows[] = $cells;
         }
 
         return $rows;

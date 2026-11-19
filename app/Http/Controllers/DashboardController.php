@@ -6,7 +6,9 @@ use App\Models\Customer;
 use App\Models\ReceivingGood;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends Controller
 {
@@ -53,80 +55,128 @@ class DashboardController extends Controller
             });
         }
 
-        // Satu query tunggal untuk seluruh statistik scalar (dulu 6 query terpisah
-        // yang masing-masing full scan tabel yang sama -> salah satu penyebab timeout).
-        $statsRow = (clone $baseQuery)
-            ->selectRaw('COUNT(DISTINCT bsthp_no) as total_bsthp')
-            ->selectRaw('COUNT(DISTINCT code_item) as total_code_item')
-            ->selectRaw('COUNT(DISTINCT CASE WHEN label_barcode_no IS NOT NULL THEN label_barcode_no END) as total_barcode')
-            ->selectRaw('COUNT(DISTINCT customer) as total_customer')
-            ->selectRaw('COUNT(*) as total_rows')
-            ->selectRaw('COALESCE(SUM(qty), 0) as total_qty')
-            ->first();
+        // Seluruh agregasi berat (statistik, top customer/item, grafik tren) dihitung
+        // sekali lalu di-cache berdasarkan kombinasi filter + "versi data".
+        // Versi data dinaikkan otomatis setiap kali ada import (lihat importer),
+        // jadi cache tidak pernah menampilkan data basi setelah upload.
+        // Tanpa cache, tiap buka halaman = belasan query COUNT(DISTINCT) yang
+        // memindai seluruh tabel -> melewati batas 60 detik saat data membesar.
+        $cacheKey = 'receiving_goods.dashboard.'.Cache::get('receiving_goods.data_version', '0').'.'.md5(json_encode([
+            $dateFrom?->toDateTimeString(),
+            $dateTo?->toDateTimeString(),
+            $request->input('customer'),
+            $request->input('pic'),
+            $request->input('line'),
+        ]));
 
-        $totalBsthp = (int) $statsRow->total_bsthp;
-        $totalCodeItem = (int) $statsRow->total_code_item;
-        $totalBarcode = (int) $statsRow->total_barcode;
-        $totalCustomer = (int) $statsRow->total_customer;
-        $totalRows = (int) $statsRow->total_rows;
-        $totalQty = (float) $statsRow->total_qty;
+        // Query agregasi membaca tabel ringkasan `receiving_goods_rollup` (lihat migration
+        // create_receiving_goods_rollup_table), bukan tabel utama yang berisi 600rb+ baris.
+        // Filter-nya setara dengan $baseQuery di atas (rentang tanggal, customer, PIC, Line).
+        $rollup = DB::table('receiving_goods_rollup');
+        if ($dateFrom) {
+            $rollup->where('work_date', '>=', $dateFrom->toDateString());
+        }
+        if ($dateTo) {
+            $rollup->where('work_date', '<=', $dateTo->toDateString());
+        }
+        if ($request->filled('customer')) {
+            $rollup->where('customer', $request->customer);
+        }
+        if ($request->filled('pic')) {
+            $rollup->where('verify_by', $request->pic);
+        }
+        if ($request->filled('line')) {
+            $lineFilter = $request->integer('line');
+            $rollup->whereIn('customer', function ($sub) use ($lineFilter) {
+                $sub->select('name')->from('customers')->where('line', $lineFilter);
+            });
+        }
 
-        // Breakdown jumlah item yang diverifikasi per PIC, mis. "DANDI: 5"
-        $verifiedByPic = (clone $baseQuery)
-            ->whereNotNull('verify_by')
-            ->select('verify_by', DB::raw('COUNT(*) as jumlah'))
-            ->groupBy('verify_by')
-            ->orderByDesc('jumlah')
-            ->get();
+        $heavy = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($rollup) {
+            $this->ensureRollupReady();
 
-        $totalVerified = $verifiedByPic->sum('jumlah');
+            $statsRow = (clone $rollup)
+                ->selectRaw('COUNT(DISTINCT bsthp_no) as total_bsthp')
+                ->selectRaw('COUNT(DISTINCT code_item) as total_code_item')
+                ->selectRaw('COALESCE(SUM(label_count), 0) as total_barcode')
+                ->selectRaw('COUNT(DISTINCT customer) as total_customer')
+                ->selectRaw('COALESCE(SUM(row_count), 0) as total_rows')
+                ->selectRaw('COALESCE(SUM(qty_sum), 0) as total_qty')
+                ->first();
 
-        // Breakdown jumlah BSTHP unik per PIC verifikator untuk grafik khusus.
-        $picBsthpChartData = $this->buildPicBsthpChartData($baseQuery);
+            $totalBsthp = (int) $statsRow->total_bsthp;
+            $totalCodeItem = (int) $statsRow->total_code_item;
+            $totalBarcode = (int) $statsRow->total_barcode;
+            $totalCustomer = (int) $statsRow->total_customer;
+            $totalRows = (int) $statsRow->total_rows;
+            $totalQty = (float) $statsRow->total_qty;
 
-        // Breakdown jumlah BSTHP berdasarkan jam kedatangan (dari jam pada date_income),
-        // mengikuti filter tanggal yang sedang aktif di halaman.
-        $hourlyArrivalChartData = $this->buildHourlyArrivalChartData($baseQuery);
+            // Jumlah item yang diverifikasi per PIC (+ jumlah BSTHP unik per PIC untuk grafik).
+            $verifiedByPic = (clone $rollup)
+                ->whereNotNull('verify_by')
+                ->select('verify_by')
+                ->selectRaw('CAST(SUM(row_count) AS UNSIGNED) as jumlah')
+                ->selectRaw('COUNT(DISTINCT bsthp_no) as bsthp_count')
+                ->groupBy('verify_by')
+                ->orderByDesc('jumlah')
+                ->get();
 
-        // Breakdown jumlah customer (unik) per Line untuk pie chart.
-        $customerByLineChartData = $this->buildCustomerByLineChartData($baseQuery);
+            $totalVerified = $verifiedByPic->sum('jumlah');
+            $picBsthpChartData = $this->buildPicBsthpChartData($verifiedByPic);
 
-        // Top 10 customer berdasarkan jumlah BSTHP, total qty, dan total barcode.
-        $topCustomers = (clone $baseQuery)
-            ->whereNotNull('customer')
-            ->leftJoin('customers', 'customers.name', '=', 'receiving_goods.customer')
-            ->select(
-                'receiving_goods.customer',
-                'customers.line as line',
-                DB::raw('COUNT(DISTINCT receiving_goods.bsthp_no) as jumlah_bsthp'),
-                DB::raw('COALESCE(SUM(receiving_goods.qty), 0) as total_qty'),
-                DB::raw('COUNT(DISTINCT CASE WHEN receiving_goods.label_barcode_no IS NOT NULL THEN receiving_goods.label_barcode_no END) as total_barcode')
-            )
-            ->groupBy('receiving_goods.customer', 'customers.line')
-            ->orderByDesc('jumlah_bsthp')
-            ->orderBy('receiving_goods.customer')
-            ->get();
+            $hourlyArrivalChartData = $this->buildHourlyArrivalChartData($rollup);
 
-        // Top 10 item berdasarkan jumlah BSTHP, total qty, dan total barcode.
-        $topItems = (clone $baseQuery)
-            ->whereNotNull('code_item')
-            ->select(
-                'code_item',
-                DB::raw('MIN(customer) as customer'),
-                DB::raw('COUNT(DISTINCT bsthp_no) as jumlah_bsthp'),
-                DB::raw('COALESCE(SUM(qty), 0) as total_qty'),
-                DB::raw('COUNT(DISTINCT CASE WHEN label_barcode_no IS NOT NULL THEN label_barcode_no END) as total_barcode')
-            )
-            ->groupBy('code_item')
-            ->orderByDesc('jumlah_bsthp')
-            ->orderBy('code_item')
-            ->get();
+            // Top customer (jumlah BSTHP, total qty, total barcode).
+            $topCustomers = (clone $rollup)
+                ->whereNotNull('receiving_goods_rollup.customer')
+                ->leftJoin('customers', 'customers.name', '=', 'receiving_goods_rollup.customer')
+                ->select('receiving_goods_rollup.customer', 'customers.line as line')
+                ->selectRaw('COUNT(DISTINCT receiving_goods_rollup.bsthp_no) as jumlah_bsthp')
+                ->selectRaw('COALESCE(SUM(receiving_goods_rollup.qty_sum), 0) as total_qty')
+                ->selectRaw('COALESCE(SUM(receiving_goods_rollup.label_count), 0) as total_barcode')
+                ->groupBy('receiving_goods_rollup.customer', 'customers.line')
+                ->orderByDesc('jumlah_bsthp')
+                ->orderBy('receiving_goods_rollup.customer')
+                ->get();
+
+            // Pie chart customer per Line, diturunkan dari $topCustomers (tanpa query tambahan).
+            $customerByLineChartData = $this->buildCustomerByLineChartData($topCustomers);
+
+            $topItems = (clone $rollup)
+                ->whereNotNull('code_item')
+                ->select('code_item')
+                ->selectRaw('MIN(customer) as customer')
+                ->selectRaw('COUNT(DISTINCT bsthp_no) as jumlah_bsthp')
+                ->selectRaw('COALESCE(SUM(qty_sum), 0) as total_qty')
+                ->selectRaw('COALESCE(SUM(label_count), 0) as total_barcode')
+                ->groupBy('code_item')
+                ->orderByDesc('jumlah_bsthp')
+                ->orderBy('code_item')
+                ->get();
+
+            // Grafik tren harian / bulanan / tahunan. COUNT(DISTINCT) tidak bisa
+            // dijumlahkan antar periode, jadi tiap periode dihitung langsung (dari
+            // tabel ringkasan yang kecil, jadi tetap cepat).
+            $chartData = [
+                'day' => $this->buildChartSeries($rollup, "DATE_FORMAT(work_date, '%Y-%m-%d')"),
+                'month' => $this->buildChartSeries($rollup, "DATE_FORMAT(work_date, '%Y-%m')"),
+                'year' => $this->buildChartSeries($rollup, "DATE_FORMAT(work_date, '%Y')"),
+            ];
+
+            return compact(
+                'totalBsthp', 'totalCodeItem', 'totalBarcode', 'totalCustomer',
+                'totalRows', 'totalQty', 'totalVerified', 'verifiedByPic',
+                'picBsthpChartData', 'hourlyArrivalChartData', 'customerByLineChartData',
+                'topCustomers', 'topItems', 'chartData'
+            );
+        });
+        extract($heavy);
 
         // Daftar customer & PIC untuk dropdown filter (dari seluruh data, bukan hasil filter).
         // Di-cache singkat karena query ini tidak bergantung pada filter tapi tadinya
         // dijalankan ulang (full scan + join) di setiap request.
-        $customerOptions = \Illuminate\Support\Facades\Cache::remember(
-            'receiving_goods.customer_options',
+        $customerOptions = Cache::remember(
+            'receiving_goods.customer_options.'.Cache::get('receiving_goods.data_version', '0'),
             300,
             fn () => ReceivingGood::query()
                 ->whereNotNull('customer')
@@ -136,12 +186,12 @@ class DashboardController extends Controller
                 ->orderBy('receiving_goods.customer')
                 ->get()
         );
-        $picOptions = \Illuminate\Support\Facades\Cache::remember(
-            'receiving_goods.pic_options',
+        $picOptions = Cache::remember(
+            'receiving_goods.pic_options.'.Cache::get('receiving_goods.data_version', '0'),
             300,
             fn () => ReceivingGood::whereNotNull('verify_by')->distinct()->orderBy('verify_by')->pluck('verify_by')
         );
-        $lineOptions = \Illuminate\Support\Facades\Cache::remember(
+        $lineOptions = Cache::remember(
             'receiving_goods.line_options',
             300,
             fn () => Customer::whereNotNull('line')->distinct()->orderBy('line')->pluck('line')
@@ -164,26 +214,6 @@ class DashboardController extends Controller
             });
         }
         $rows = $tableQuery->paginate(25)->withQueryString();
-
-        // Data grafik tren (Harian / Bulanan / Tahunan) untuk BSTHP, Customer, dan PIC Verifikator.
-        // Dihitung sekali untuk ketiga periode sekaligus supaya toggle di frontend tidak perlu reload halaman.
-        //
-        // Sebelumnya periode dihitung dengan DATE_FORMAT(date_income, ...) di
-        // SELECT/GROUP BY. Membungkus date_income dengan fungsi membuat index
-        // pada kolom itu tidak terpakai, jadi ketiga query ini masing-masing
-        // full table scan (3x scan tabel yang sama, masing-masing dengan 3x
-        // COUNT DISTINCT) -- salah satu penyebab utama timeout 60 detik.
-        // Sekarang memakai kolom generated (date_income_date / _month / _year)
-        // yang sudah diindex, sehingga tiap query bisa memakai index scan.
-        // (Query tetap dipisah per periode, bukan digabung jadi satu, karena
-        // COUNT(DISTINCT ...) harian tidak bisa dijumlahkan begitu saja
-        // menjadi COUNT(DISTINCT ...) bulanan/tahunan tanpa berpotensi salah
-        // hitung -- roll-up seperti itu hanya benar untuk COUNT(*)/SUM.)
-        $chartData = [
-            'day' => $this->buildChartSeries($baseQuery, 'date_income_date'),
-            'month' => $this->buildChartSeries($baseQuery, 'date_income_month'),
-            'year' => $this->buildChartSeries($baseQuery, 'date_income_year'),
-        ];
 
         return view('dashboard', [
             'dateFrom' => $dateFrom,
@@ -216,16 +246,12 @@ class DashboardController extends Controller
     /**
      * Hitung jumlah BSTHP unik yang dikirimkan per PIC verifikator.
      */
-    protected function buildPicBsthpChartData($baseQuery): array
+    protected function buildPicBsthpChartData($verifiedByPic): array
     {
-        $result = (clone $baseQuery)
-            ->whereNotNull('verify_by')
-            ->whereNotNull('bsthp_no')
-            ->select('verify_by', DB::raw('COUNT(DISTINCT bsthp_no) as bsthp_count'))
-            ->groupBy('verify_by')
-            ->orderByDesc('bsthp_count')
-            ->orderBy('verify_by')
-            ->get();
+        $result = $verifiedByPic
+            ->filter(fn ($row) => (int) $row->bsthp_count > 0)
+            ->sortBy([['bsthp_count', 'desc'], ['verify_by', 'asc']])
+            ->values();
 
         return [
             'labels' => $result->pluck('verify_by')->all(),
@@ -234,24 +260,17 @@ class DashboardController extends Controller
     }
 
     /**
-     * Hitung jumlah BSTHP (unik) berdasarkan jam kedatangan, diambil dari jam
-     * pada kolom `date_income` (00:00 s.d. 23:00), mengikuti filter tanggal
-     * (dan filter lain) yang sedang aktif lewat $baseQuery.
+     * Hitung jumlah BSTHP (unik) berdasarkan jam kedatangan (00:00 s.d. 23:00),
+     * dari tabel ringkasan, mengikuti filter yang sedang aktif.
      */
-    protected function buildHourlyArrivalChartData($baseQuery): array
+    protected function buildHourlyArrivalChartData($rollup): array
     {
-        // Dulu memakai HOUR(date_income) di SELECT/GROUP BY, yang membungkus
-        // kolom dengan fungsi sehingga index pada date_income tidak terpakai
-        // (full table scan). Sekarang memakai kolom generated
-        // `date_income_hour` yang sudah diindex, supaya MySQL bisa memakai
-        // index scan.
-        $result = (clone $baseQuery)
-            ->whereNotNull('date_income')
-            ->select('date_income_hour as hour')
+        $result = (clone $rollup)
+            ->select('work_hour as hour')
             ->selectRaw('COUNT(DISTINCT bsthp_no) as bsthp_count')
-            ->selectRaw('COUNT(*) as rows_count')
-            ->groupBy('date_income_hour')
-            ->orderBy('date_income_hour')
+            ->selectRaw('COALESCE(SUM(row_count), 0) as rows_count')
+            ->groupBy('work_hour')
+            ->orderBy('work_hour')
             ->get()
             ->keyBy('hour');
 
@@ -278,24 +297,11 @@ class DashboardController extends Controller
      * Hitung jumlah customer (unik) per Line, untuk pie chart "Customer Berdasarkan Line".
      * Customer yang belum punya Line di tabel master dikelompokkan sebagai "Tanpa Line".
      */
-    protected function buildCustomerByLineChartData($baseQuery): array
+    protected function buildCustomerByLineChartData($topCustomers): array
     {
-        // Satu query yang mengelompokkan (line_group, customer) sekaligus, lalu
-        // di-agregasi di PHP. Sebelumnya kode ini menjalankan 1 query ringkasan
-        // + 1 query tambahan PER line group (N+1) -- pada dataset besar dengan
-        // banyak Line ini adalah salah satu penyebab utama timeout 60 detik.
-        $rows = (clone $baseQuery)
-            ->whereNotNull('customer')
-            ->leftJoin('customers', 'customers.name', '=', 'receiving_goods.customer')
-            ->selectRaw('COALESCE(customers.line, 0) as line_group')
-            ->selectRaw('receiving_goods.customer as customer')
-            ->selectRaw('COUNT(DISTINCT CASE WHEN receiving_goods.label_barcode_no IS NOT NULL THEN receiving_goods.label_barcode_no END) as total_barcode')
-            ->groupBy('line_group', 'receiving_goods.customer')
-            ->get();
-
         $groups = [];
-        foreach ($rows as $row) {
-            $lineValue = (int) $row->line_group;
+        foreach ($topCustomers as $row) {
+            $lineValue = (int) ($row->line ?? 0);
             if (! isset($groups[$lineValue])) {
                 $groups[$lineValue] = ['customers' => [], 'total_barcode' => 0];
             }
@@ -340,21 +346,19 @@ class DashboardController extends Controller
 
     /**
      * Hitung tren jumlah BSTHP (unik), Customer (unik), dan item yang diverifikasi PIC
-     * dikelompokkan berdasarkan kolom periode (date_income_date / _month / _year,
-     * semuanya generated column yang sudah diindex -- lihat migration
-     * add_date_parts_to_receiving_goods_table).
+     * dikelompokkan per periode ($periodExpr = ekspresi SQL atas kolom work_date),
+     * dari tabel ringkasan.
      */
-    protected function buildChartSeries($baseQuery, string $periodColumn): array
+    protected function buildChartSeries($rollup, string $periodExpr): array
     {
-        $result = (clone $baseQuery)
-            ->whereNotNull('date_income')
-            ->select("{$periodColumn} as period")
+        $result = (clone $rollup)
+            ->selectRaw("{$periodExpr} as period")
             ->selectRaw('COUNT(DISTINCT bsthp_no) as bsthp_count')
             ->selectRaw('COUNT(DISTINCT customer) as customer_count')
             ->selectRaw('COUNT(DISTINCT verify_by) as pic_count')
-            ->selectRaw('SUM(CASE WHEN verify_by IS NOT NULL THEN 1 ELSE 0 END) as verified_count')
-            ->groupBy($periodColumn)
-            ->orderBy($periodColumn)
+            ->selectRaw('COALESCE(SUM(CASE WHEN verify_by IS NOT NULL THEN row_count ELSE 0 END), 0) as verified_count')
+            ->groupBy('period')
+            ->orderBy('period')
             ->get();
 
         return [
@@ -364,5 +368,24 @@ class DashboardController extends Controller
             'pic' => $result->pluck('pic_count')->map(fn ($v) => (int) $v)->all(),
             'verified' => $result->pluck('verified_count')->map(fn ($v) => (int) $v)->all(),
         ];
+    }
+
+    /**
+     * Pastikan tabel ringkasan sudah ada dan terisi; kalau belum, beri pesan yang jelas
+     * (bukan dashboard kosong yang menyesatkan).
+     */
+    protected function ensureRollupReady(): void
+    {
+        $missing = ! Schema::hasTable('receiving_goods_rollup');
+        $empty = ! $missing
+            && ! DB::table('receiving_goods_rollup')->exists()
+            && ReceivingGood::query()->exists();
+
+        if ($missing || $empty) {
+            throw new \RuntimeException(
+                'Tabel ringkasan dashboard belum dibuat/terisi. Jalankan di terminal: '.
+                'php artisan migrate  lalu  php artisan rollup:rebuild'
+            );
+        }
     }
 }
