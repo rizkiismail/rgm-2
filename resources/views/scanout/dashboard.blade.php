@@ -118,9 +118,9 @@
         <nav id="sectionNavCollapse" style="font-size: 0.70rem;" class="nav nav-pills collapse flex-column flex-md-row flex-md-nowrap overflow-auto gap-2 bg-white p-2 rounded-3 shadow-sm section-nav">
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link active" href="#section-summary" data-section="section-summary">Ringkasan</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-trends" data-section="section-trends">Tren Scan Out, Customer &amp; Code Item</a>
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-outgoing-pic" data-section="section-outgoing-pic">Outgoing Type &amp; PIC Scan</a>
-            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-hourly-scan" data-section="section-hourly-scan">Jam Scan Out</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-outgoing-pic" data-section="section-outgoing-pic">Outgoing Type &amp; PIC Scan</a> 
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-line-chart" data-section="section-line-chart">Line Chart</a>
+            <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-hourly-scan" data-section="section-hourly-scan">Jam Scan Out</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-top10" data-section="section-top10">Top 10 Customer &amp; Code Item</a>
             <a class="nav-link btn btn-sm btn-outline-primary section-nav-link" href="#section-detail-data" data-section="section-detail-data">Detail Data</a>
         </nav>
