@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
@@ -42,6 +43,10 @@ class ScanOutImporter
      */
     public function importFromFile(string $filePath, string $batchLabel, bool $truncateFirst = false): array
     {
+        // File export bisa besar; jangan sampai kena batas waktu/memori bawaan PHP.
+        @set_time_limit(0);
+        @ini_set('memory_limit', '1024M');
+
         $rows = $this->parseRows($filePath);
 
         if (count($rows) === 0) {
@@ -58,6 +63,8 @@ class ScanOutImporter
         $inserted = 0;
         $skipped = 0;
         $now = now();
+        $minDate = null; // rentang tanggal data yang diimport, untuk memperbarui tabel fakta dashboard
+        $maxDate = null;
 
         foreach (array_chunk($rows, 500) as $chunk) {
             $records = [];
@@ -80,6 +87,10 @@ class ScanOutImporter
                 }
 
                 $scanDate = $this->toDateTime($data['scan_date']);
+                if ($scanDate !== null) {
+                    $minDate = $minDate === null || $scanDate < $minDate ? $scanDate : $minDate;
+                    $maxDate = $maxDate === null || $scanDate > $maxDate ? $scanDate : $maxDate;
+                }
 
                 $records[] = [
                     'source_no' => $this->toInt($data['source_no']),
@@ -117,6 +128,18 @@ class ScanOutImporter
                     ]
                 );
                 $inserted += count($records);
+            }
+        }
+
+        // Perbarui tabel fakta dashboard: seluruhnya jika mode "Ganti Semua Data", selain itu
+        // hanya rentang tanggal yang ada di file ini.
+        if (Schema::hasTable('scan_out_facts')) {
+            $facts = app(ScanOutFacts::class);
+
+            if ($truncateFirst) {
+                $facts->rebuild();
+            } elseif ($minDate !== null) {
+                $facts->rebuild(substr($minDate, 0, 10), substr($maxDate, 0, 10));
             }
         }
 

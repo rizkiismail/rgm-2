@@ -715,5 +715,12 @@ class RowLocationSeeder extends Seeder
         }
 
         $this->command?->info(count($this->rowLocations).' data row location & line berhasil di-seed.');
+
+        // Pemetaan Line pada tabel fakta dashboard Scan Out diambil dari master ini, jadi
+        // perlu dibangun ulang kalau master berubah.
+        if (\Illuminate\Support\Facades\Schema::hasTable('scan_out_facts')) {
+            $count = app(\App\Services\ScanOutFacts::class)->rebuild();
+            $this->command?->info("Tabel fakta dashboard Scan Out dibangun ulang ({$count} baris).");
+        }
     }
 }

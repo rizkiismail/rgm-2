@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\ScanOut;
+use App\Services\ScanOutFacts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ScanOutController extends Controller
 {
@@ -13,116 +16,28 @@ class ScanOutController extends Controller
     {
         ['baseQuery' => $baseQuery, 'dateFrom' => $dateFrom, 'dateTo' => $dateTo, 'bounds' => $bounds] = $this->applyFilters($request);
 
-        // ===================== KARTU RINGKASAN =====================
-        $summary = $this->buildSummary($baseQuery);
-        $totalScanOut = $summary['totalScanOut'];
-        $totalCustomer = $summary['totalCustomer'];
-        $totalCodeItem = $summary['totalCodeItem'];
-        $totalBarcode = $summary['totalBarcode'];
-        $totalOutgoing = $summary['totalOutgoing'];
-        $totalPic = $summary['totalPic'];
-        $totalQty = $summary['totalQty'];
-        $outgoingTypeCount = $summary['outgoingTypeCount'];
+        // ===================== AGREGASI DASHBOARD =====================
+        // Seluruh angka ringkasan, grafik tren, PIC, Line, Top Customer/Code Item, dan
+        // grafik per jam dihitung dari tabel fakta sempit `scan_out_facts` (lihat
+        // migration create_scan_out_facts_table), bukan dari tabel scan_outs yang berisi
+        // 600rb+ baris teks panjang. Hasilnya di-cache per kombinasi filter + "versi data"
+        // (versi dinaikkan otomatis setiap import), jadi buka berikutnya instan.
+        $cacheKey = 'scan_out.dashboard.'.Cache::get('scan_out.data_version', '0').'.'.md5(json_encode([
+            $dateFrom?->toDateString(),
+            $dateTo?->toDateString(),
+            $request->input('customer'),
+            $request->input('outgoing_type'),
+            $request->input('pic'),
+            $request->input('line'),
+            $request->input('q'),
+        ]));
 
-        // ===================== GRAFIK TREN (Harian/Bulanan/Tahunan) =====================
-        // Memakai kolom generated (scan_date_date / _month / _year) yang sudah
-        // diindex, bukan DATE_FORMAT(scan_date, ...) -- membungkus kolom dengan
-        // fungsi membuat index pada scan_date tidak terpakai (full table scan).
-        // Lihat migration add_date_parts_to_scan_outs_table.
-        $chartData = [
-            'day' => $this->buildChartSeries($baseQuery, 'scan_date_date'),
-            'month' => $this->buildChartSeries($baseQuery, 'scan_date_month'),
-            'year' => $this->buildChartSeries($baseQuery, 'scan_date_year'),
-        ];
-
-        // ===================== PIE CHART: OUTGOING TYPE =====================
-        $outgoingTypeChartData = [
-            'labels' => array_keys($outgoingTypeCount),
-            'values' => array_values($outgoingTypeCount),
-        ];
-
-        // ===================== SCAN OUT PER PIC =====================
-        $picScan = (clone $baseQuery)
-            ->whereNotNull('scan_by_name')
-            ->select(
-                'scan_by_name',
-                DB::raw('MIN(scan_by_nik) as scan_by_nik'),
-                DB::raw('COUNT(*) as jumlah_scan'),
-                DB::raw('COUNT(DISTINCT barcode) as jumlah_barcode'),
-                DB::raw('COALESCE(SUM(qty), 0) as total_qty')
-            )
-            ->groupBy('scan_by_name')
-            ->orderByDesc('jumlah_scan')
-            ->orderBy('scan_by_name')
-            ->get();
-
-        $picScanChartData = [
-            'labels' => $picScan->pluck('scan_by_name')->all(),
-            'values' => $picScan->pluck('jumlah_scan')->map(fn ($v) => (int) $v)->all(),
-        ];
-
-        // ===================== SCAN OUT BERDASARKAN LINE (PIE CHART) =====================
-        // Line didapat dengan mencocokkan row_location terhadap tabel master `row_locations`
-        // (hasil import Row_Location.xlsx), sama seperti Customer dicocokkan ke Line lewat
-        // tabel `customers`. Baris tanpa Row Location yang cocok masuk ke kelompok "Belum Terpetakan".
-        $lineBreakdown = (clone $baseQuery)
-            ->leftJoin('row_locations', 'row_locations.row_location', '=', 'scan_outs.row_location')
-            ->select(
-                DB::raw("COALESCE(row_locations.line_label, 'Belum Terpetakan') as line_label"),
-                DB::raw('COALESCE(row_locations.line, 99) as line_sort'),
-                DB::raw('COUNT(*) as jumlah_scan'),
-                DB::raw('COUNT(DISTINCT scan_outs.barcode) as jumlah_barcode'),
-                DB::raw('COALESCE(SUM(scan_outs.qty), 0) as total_qty')
-            )
-            ->groupBy('line_label', 'line_sort')
-            ->orderBy('line_sort')
-            ->get();
-
-        $lineChartData = [
-            'labels' => $lineBreakdown->pluck('line_label')->all(),
-            'values' => $lineBreakdown->pluck('jumlah_scan')->map(fn ($v) => (int) $v)->all(),
-        ];
-
-        // ===================== TOP 10 CUSTOMER & CODE ITEM =====================
-        $topCustomers = (clone $baseQuery)
-            ->whereNotNull('customer_name')
-            ->select(
-                'customer_name',
-                DB::raw('COUNT(*) as jumlah_scan'),
-                DB::raw('COUNT(DISTINCT barcode) as jumlah_barcode'),
-                DB::raw('COUNT(DISTINCT code_item) as jumlah_code_item'),
-                DB::raw('COALESCE(SUM(qty), 0) as total_qty')
-            )
-            ->groupBy('customer_name')
-            ->orderByDesc('jumlah_scan')
-            ->orderBy('customer_name')
-            ->get();
-
-        $topCodeItems = (clone $baseQuery)
-            ->whereNotNull('code_item')
-            ->select(
-                'code_item',
-                DB::raw('MIN(customer_name) as customer_name'),
-                DB::raw('MIN(part_name) as part_name'),
-                DB::raw('COUNT(*) as jumlah_scan'),
-                DB::raw('COUNT(DISTINCT barcode) as jumlah_barcode'),
-                DB::raw('COALESCE(SUM(qty), 0) as total_qty')
-            )
-            ->groupBy('code_item')
-            ->orderByDesc('jumlah_scan')
-            ->orderBy('code_item')
-            ->get();
-
-        $topCustomerChartData = [
-            'labels' => $topCustomers->pluck('customer_name')->all(),
-            'values' => $topCustomers->pluck('jumlah_scan')->map(fn ($v) => (int) $v)->all(),
-        ];
-        $topCodeItemChartData = [
-            'labels' => $topCodeItems->pluck('code_item')->all(),
-            'values' => $topCodeItems->pluck('jumlah_scan')->map(fn ($v) => (int) $v)->all(),
-        ];
-
-        $hourlyScanChartData = $this->buildHourlyScanChartData($baseQuery);
+        $aggregates = Cache::remember(
+            $cacheKey,
+            now()->addMinutes(30),
+            fn () => $this->buildAggregates($request, $dateFrom, $dateTo)
+        );
+        extract($aggregates);
 
         // Daftar dropdown filter (dari seluruh data, bukan hasil filter).
         // Di-cache singkat karena query ini tidak bergantung pada filter tapi tadinya
@@ -153,7 +68,12 @@ class ScanOutController extends Controller
 );
 
         // Tabel detail dengan pencarian sederhana + pagination.
-        $rows = (clone $baseQuery)->with('rowLocationMaster')->orderByDesc('scan_date')->paginate(25)->withQueryString();
+        // Total baris sudah diketahui dari agregasi ($totalScanOut = jumlah baris sesuai filter yang
+        // sama), jadi diberikan langsung ke paginator. Tanpa ini, paginate() menjalankan
+        // COUNT(*) tambahan pada tabel scan_outs (dengan subquery Line bisa >10 detik).
+        $rows = (clone $baseQuery)->with('rowLocationMaster')->orderByDesc('scan_date')
+            ->paginate(25, ['*'], 'page', null, $totalScanOut)
+            ->withQueryString();
 
         $exportUrl = route('scanout.export', array_filter([
             'date_from' => $dateFrom?->format('Y-m-d'),
@@ -197,38 +117,6 @@ class ScanOutController extends Controller
             'hasData' => ScanOut::query()->exists(),
             'exportUrl' => $exportUrl,
         ]);
-    }
-
-    /**
-     * Hitung jumlah Scan Out berdasarkan jam scan_date (00:00 s.d. 23:00), mengikuti
-     * filter tanggal pada dashboard.
-     */
-    protected function buildHourlyScanChartData($baseQuery): array
-    {
-        // Memakai kolom generated scan_date_hour yang sudah diindex, bukan
-        // HOUR(scan_date) -- lihat migration add_date_parts_to_scan_outs_table.
-        $result = (clone $baseQuery)
-            ->whereNotNull('scan_date')
-            ->select('scan_date_hour as hour')
-            ->selectRaw('COUNT(*) as scan_count')
-            ->groupBy('scan_date_hour')
-            ->orderBy('scan_date_hour')
-            ->get()
-            ->keyBy('hour');
-
-        $labels = [];
-        $values = [];
-
-        for ($hour = 0; $hour < 24; $hour++) {
-            $row = $result->get($hour);
-            $labels[] = sprintf('%02d:00', $hour);
-            $values[] = $row ? (int) $row->scan_count : 0;
-        }
-
-        return [
-            'labels' => $labels,
-            'values' => $values,
-        ];
     }
 
     /**
@@ -385,19 +273,265 @@ class ScanOutController extends Controller
     }
 
     /**
-     * Hitung tren jumlah Scan Out, Customer (unik), dan Code Item (unik)
-     * dikelompokkan berdasarkan ekspresi periode (harian/bulanan/tahunan).
+     * Hitung semua agregasi dashboard dari tabel fakta. Hasilnya berupa array yang di-extract
+     * ke variabel view di index().
      */
-    protected function buildChartSeries($baseQuery, string $periodExpr): array
+    protected function buildAggregates(Request $request, ?Carbon $dateFrom, ?Carbon $dateTo): array
     {
-        $result = (clone $baseQuery)
-            ->whereNotNull('scan_date')
+        $this->ensureFactsReady();
+
+        // Kamus nilai teks: kind => [id => [value, extra]]
+        $terms = [];
+        foreach (DB::table('scan_out_terms')->get() as $t) {
+            $terms[$t->kind][$t->id] = $t;
+        }
+        $name = fn (int $kind, $id) => $id !== null && isset($terms[$kind][$id]) ? $terms[$kind][$id]->value : null;
+
+        $keyword = $request->filled('q') ? $request->q : null;
+
+        try {
+            $facts = $this->factQuery($request, $dateFrom, $dateTo, $keyword);
+
+            // ---------- Kartu ringkasan ----------
+            $row = (clone $facts)
+                ->selectRaw('COUNT(*) as total_scan_out')
+                ->selectRaw('COUNT(DISTINCT f.cust) as total_customer')
+                ->selectRaw('COUNT(DISTINCT f.item) as total_code_item')
+                ->selectRaw('COUNT(DISTINCT f.bc) as total_barcode')
+                ->selectRaw('COUNT(DISTINCT f.outg) as total_outgoing')
+                ->selectRaw('COUNT(DISTINCT f.pic) as total_pic')
+                ->selectRaw('COALESCE(SUM(f.qty), 0) as total_qty')
+                ->first();
+
+            $totalScanOut = (int) $row->total_scan_out;
+            $totalCustomer = (int) $row->total_customer;
+            $totalCodeItem = (int) $row->total_code_item;
+            $totalBarcode = (int) $row->total_barcode;
+            $totalOutgoing = (int) $row->total_outgoing;
+            $totalPic = (int) $row->total_pic;
+            $totalQty = (float) $row->total_qty;
+
+            // Jumlah outgoing (No. Outgoing unik) per Outgoing Type.
+            $outgoingTypeCount = [];
+            $typeRows = (clone $facts)
+                ->whereNotNull('f.typ')
+                ->whereNotNull('f.outg')
+                ->select('f.typ')
+                ->selectRaw('COUNT(DISTINCT f.outg) as jumlah')
+                ->groupBy('f.typ')
+                ->orderByDesc('jumlah')
+                ->get();
+            foreach ($typeRows as $r) {
+                $label = $name(ScanOutFacts::KIND_TYPE, $r->typ);
+                if ($label !== null) {
+                    $outgoingTypeCount[$label] = (int) $r->jumlah;
+                }
+            }
+
+            $outgoingTypeChartData = [
+                'labels' => array_keys($outgoingTypeCount),
+                'values' => array_values($outgoingTypeCount),
+            ];
+
+            // ---------- Grafik tren (harian / bulanan / tahunan) ----------
+            $chartData = [
+                'day' => $this->buildChartSeries($facts, "DATE_FORMAT(f.d, '%Y-%m-%d')"),
+                'month' => $this->buildChartSeries($facts, "DATE_FORMAT(f.d, '%Y-%m')"),
+                'year' => $this->buildChartSeries($facts, "DATE_FORMAT(f.d, '%Y')"),
+            ];
+
+            // ---------- Scan Out per PIC ----------
+            $picScan = (clone $facts)
+                ->whereNotNull('f.pic')
+                ->select('f.pic')
+                ->selectRaw('COUNT(*) as jumlah_scan')
+                ->selectRaw('COUNT(DISTINCT f.bc) as jumlah_barcode')
+                ->selectRaw('COALESCE(SUM(f.qty), 0) as total_qty')
+                ->groupBy('f.pic')
+                ->get()
+                ->map(function ($r) use ($terms) {
+                    $term = $terms[ScanOutFacts::KIND_PIC][$r->pic] ?? null;
+
+                    return (object) [
+                        'scan_by_name' => $term?->value,
+                        'scan_by_nik' => $term?->extra,
+                        'jumlah_scan' => (int) $r->jumlah_scan,
+                        'jumlah_barcode' => (int) $r->jumlah_barcode,
+                        'total_qty' => $r->total_qty,
+                    ];
+                });
+            $picScan = $this->sortByCountThenName($picScan, 'jumlah_scan', 'scan_by_name');
+
+            $picScanChartData = [
+                'labels' => $picScan->pluck('scan_by_name')->all(),
+                'values' => $picScan->pluck('jumlah_scan')->map(fn ($v) => (int) $v)->all(),
+            ];
+
+            // ---------- Scan Out per Line (pie chart) ----------
+            // Line dipetakan dari row_location lewat master `row_locations` saat tabel fakta
+            // dibangun; baris tanpa pemetaan masuk "Belum Terpetakan".
+            $lineBreakdown = (clone $facts)
+                ->select('f.line_term', 'f.line_sort')
+                ->selectRaw('COUNT(*) as jumlah_scan')
+                ->groupBy('f.line_term', 'f.line_sort')
+                ->orderBy('f.line_sort')
+                ->get();
+
+            $lineChartData = [
+                'labels' => $lineBreakdown->map(fn ($r) => $name(ScanOutFacts::KIND_LINE, $r->line_term) ?? 'Belum Terpetakan')->all(),
+                'values' => $lineBreakdown->pluck('jumlah_scan')->map(fn ($v) => (int) $v)->all(),
+            ];
+
+            // ---------- Top Customer & Code Item ----------
+            $topCustomers = (clone $facts)
+                ->whereNotNull('f.cust')
+                ->select('f.cust')
+                ->selectRaw('COUNT(*) as jumlah_scan')
+                ->selectRaw('COUNT(DISTINCT f.bc) as jumlah_barcode')
+                ->selectRaw('COUNT(DISTINCT f.item) as jumlah_code_item')
+                ->selectRaw('COALESCE(SUM(f.qty), 0) as total_qty')
+                ->groupBy('f.cust')
+                ->get()
+                ->map(fn ($r) => (object) [
+                    'customer_name' => $name(ScanOutFacts::KIND_CUSTOMER, $r->cust),
+                    'jumlah_scan' => (int) $r->jumlah_scan,
+                    'jumlah_barcode' => (int) $r->jumlah_barcode,
+                    'jumlah_code_item' => (int) $r->jumlah_code_item,
+                    'total_qty' => $r->total_qty,
+                ]);
+            $topCustomers = $this->sortByCountThenName($topCustomers, 'jumlah_scan', 'customer_name');
+
+            $topCodeItems = (clone $facts)
+                ->whereNotNull('f.item')
+                ->leftJoin('scan_out_terms as tc', 'tc.id', '=', 'f.cust')
+                ->select('f.item')
+                ->selectRaw('MIN(tc.value) as customer_name')
+                ->selectRaw('COUNT(*) as jumlah_scan')
+                ->selectRaw('COUNT(DISTINCT f.bc) as jumlah_barcode')
+                ->selectRaw('COALESCE(SUM(f.qty), 0) as total_qty')
+                ->groupBy('f.item')
+                ->get()
+                ->map(function ($r) use ($terms) {
+                    $term = $terms[ScanOutFacts::KIND_ITEM][$r->item] ?? null;
+
+                    return (object) [
+                        'code_item' => $term?->value,
+                        'customer_name' => $r->customer_name,
+                        'part_name' => $term?->extra,
+                        'jumlah_scan' => (int) $r->jumlah_scan,
+                        'jumlah_barcode' => (int) $r->jumlah_barcode,
+                        'total_qty' => $r->total_qty,
+                    ];
+                });
+            $topCodeItems = $this->sortByCountThenName($topCodeItems, 'jumlah_scan', 'code_item');
+
+            $topCustomerChartData = [
+                'labels' => $topCustomers->pluck('customer_name')->all(),
+                'values' => $topCustomers->pluck('jumlah_scan')->map(fn ($v) => (int) $v)->all(),
+            ];
+            $topCodeItemChartData = [
+                'labels' => $topCodeItems->pluck('code_item')->all(),
+                'values' => $topCodeItems->pluck('jumlah_scan')->map(fn ($v) => (int) $v)->all(),
+            ];
+
+            // ---------- Jumlah scan per jam (00:00 - 23:00) ----------
+            $hours = (clone $facts)
+                ->select('f.h as hour')
+                ->selectRaw('COUNT(*) as scan_count')
+                ->groupBy('f.h')
+                ->get()
+                ->keyBy('hour');
+
+            $hourlyScanChartData = ['labels' => [], 'values' => []];
+            for ($hour = 0; $hour < 24; $hour++) {
+                $hourRow = $hours->get($hour);
+                $hourlyScanChartData['labels'][] = sprintf('%02d:00', $hour);
+                $hourlyScanChartData['values'][] = $hourRow ? (int) $hourRow->scan_count : 0;
+            }
+        } finally {
+            if ($keyword !== null) {
+                DB::statement('DROP TEMPORARY TABLE IF EXISTS tmp_scan_out_q');
+            }
+        }
+
+        return compact(
+            'totalScanOut', 'totalCustomer', 'totalCodeItem', 'totalBarcode', 'totalOutgoing',
+            'totalPic', 'totalQty', 'outgoingTypeCount', 'outgoingTypeChartData', 'chartData',
+            'picScan', 'picScanChartData', 'lineChartData', 'topCustomers', 'topCodeItems',
+            'topCustomerChartData', 'topCodeItemChartData', 'hourlyScanChartData'
+        );
+    }
+
+    /**
+     * Query dasar pada tabel fakta dengan filter yang setara dengan applyFilters().
+     */
+    protected function factQuery(Request $request, ?Carbon $dateFrom, ?Carbon $dateTo, ?string $keyword)
+    {
+        $facts = DB::table('scan_out_facts as f');
+
+        if ($dateFrom) {
+            $facts->where('f.d', '>=', $dateFrom->toDateString());
+        }
+        if ($dateTo) {
+            $facts->where('f.d', '<=', $dateTo->toDateString());
+        }
+
+        // Filter nilai teks -> ID kamus. Nilai yang tidak ada di kamus = tidak ada hasil.
+        $termFilters = [
+            ['customer', ScanOutFacts::KIND_CUSTOMER, 'f.cust'],
+            ['outgoing_type', ScanOutFacts::KIND_TYPE, 'f.typ'],
+            ['pic', ScanOutFacts::KIND_PIC, 'f.pic'],
+            ['line', ScanOutFacts::KIND_LINE, 'f.line_term'],
+        ];
+        foreach ($termFilters as [$param, $kind, $column]) {
+            if (! $request->filled($param)) {
+                continue;
+            }
+            $id = DB::table('scan_out_terms')->where('kind', $kind)->where('value', $request->input($param))->value('id');
+            if ($id === null) {
+                $facts->whereRaw('1 = 0');
+            } else {
+                $facts->where($column, $id);
+            }
+        }
+
+        // Pencarian teks bebas (code item, part name, barcode, no outgoing, customer, PIC)
+        // butuh kolom teks di tabel scan_outs. Cukup dicari SEKALI ke tabel temporary berisi
+        // ID baris yang cocok, lalu di-join ke tabel fakta oleh semua query agregasi.
+        if ($keyword !== null) {
+            $matches = DB::table('scan_outs')->select('id')->where(function ($sub) use ($keyword) {
+                $sub->where('code_item', 'like', "%{$keyword}%")
+                    ->orWhere('part_name', 'like', "%{$keyword}%")
+                    ->orWhere('barcode', 'like', "%{$keyword}%")
+                    ->orWhere('outgoing_no', 'like', "%{$keyword}%")
+                    ->orWhere('customer_name', 'like', "%{$keyword}%")
+                    ->orWhere('scan_by_name', 'like', "%{$keyword}%");
+            });
+
+            DB::statement('DROP TEMPORARY TABLE IF EXISTS tmp_scan_out_q');
+            DB::statement(
+                'CREATE TEMPORARY TABLE tmp_scan_out_q (PRIMARY KEY (id)) AS '.$matches->toSql(),
+                $matches->getBindings()
+            );
+            $facts->join('tmp_scan_out_q as q', 'q.id', '=', 'f.id');
+        }
+
+        return $facts;
+    }
+
+    /**
+     * Tren jumlah Scan Out, Customer (unik), Code Item (unik), Barcode (unik) dan Qty per
+     * periode ($periodExpr = ekspresi SQL atas kolom f.d).
+     */
+    protected function buildChartSeries($facts, string $periodExpr): array
+    {
+        $result = (clone $facts)
             ->selectRaw("{$periodExpr} as period")
             ->selectRaw('COUNT(*) as scan_count')
-            ->selectRaw('COUNT(DISTINCT customer_name) as customer_count')
-            ->selectRaw('COUNT(DISTINCT code_item) as code_item_count')
-            ->selectRaw('COUNT(DISTINCT barcode) as barcode_count')
-            ->selectRaw('COALESCE(SUM(qty), 0) as qty_sum')
+            ->selectRaw('COUNT(DISTINCT f.cust) as customer_count')
+            ->selectRaw('COUNT(DISTINCT f.item) as code_item_count')
+            ->selectRaw('COUNT(DISTINCT f.bc) as barcode_count')
+            ->selectRaw('COALESCE(SUM(f.qty), 0) as qty_sum')
             ->groupBy('period')
             ->orderBy('period')
             ->get();
@@ -410,5 +544,34 @@ class ScanOutController extends Controller
             'barcode' => $result->pluck('barcode_count')->map(fn ($v) => (int) $v)->all(),
             'qty' => $result->pluck('qty_sum')->map(fn ($v) => (float) $v)->all(),
         ];
+    }
+
+    /**
+     * Urutkan menurun berdasarkan jumlah, lalu menaik berdasarkan nama (tanpa beda huruf besar/kecil).
+     */
+    protected function sortByCountThenName($collection, string $countKey, string $nameKey)
+    {
+        return $collection->sort(function ($a, $b) use ($countKey, $nameKey) {
+            return [$b->{$countKey}, strtolower((string) $a->{$nameKey})]
+                <=> [$a->{$countKey}, strtolower((string) $b->{$nameKey})];
+        })->values();
+    }
+
+    /**
+     * Pastikan tabel fakta sudah ada dan terisi; kalau belum, beri pesan yang jelas.
+     */
+    protected function ensureFactsReady(): void
+    {
+        $missing = ! Schema::hasTable('scan_out_facts');
+        $empty = ! $missing
+            && ! DB::table('scan_out_facts')->exists()
+            && ScanOut::query()->exists();
+
+        if ($missing || $empty) {
+            throw new \RuntimeException(
+                'Tabel fakta dashboard Scan Out belum dibuat/terisi. Jalankan di terminal: '.
+                'php artisan migrate  lalu  php artisan scanout:rebuild'
+            );
+        }
     }
 }

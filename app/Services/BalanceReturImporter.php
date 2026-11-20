@@ -50,6 +50,10 @@ class BalanceReturImporter
      */
     public function importFromFile(string $filePath, string $batchLabel, bool $truncateFirst = false): array
     {
+        // File export bisa besar; jangan sampai kena batas waktu/memori bawaan PHP.
+        @set_time_limit(0);
+        @ini_set('memory_limit', '1024M');
+
         $rows = $this->parseRows($filePath);
 
         if (count($rows) === 0) {

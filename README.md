@@ -232,15 +232,23 @@ export berubah struktur kolomnya, sesuaikan urutan kolom di
   export "Monitoring Receiving Goods" dengan struktur tabel `id="resultData"`.
 
 - **Error "Maximum execution time of 60 seconds exceeded"** (data ratusan ribu baris):
-  - Dashboard Receiving Goods membaca tabel ringkasan `receiving_goods_rollup`
-    (jauh lebih kecil dari `receiving_goods`), bukan tabel utama. Tabel ini dibuat
-    oleh `php artisan migrate` dan diperbarui otomatis setiap upload.
-    Jika dashboard menampilkan pesan "Tabel ringkasan ... belum dibuat/terisi",
-    jalankan `php artisan migrate` lalu `php artisan rollup:rebuild`.
+  - **Dashboard Receiving Goods** membaca tabel ringkasan `receiving_goods_rollup`, dan
+    **dashboard Scan Out** membaca tabel fakta sempit `scan_out_facts` (+ kamus
+    `scan_out_terms`), bukan tabel utama yang berisi 600rb+ baris teks panjang. Keduanya
+    dibuat oleh `php artisan migrate` dan diperbarui otomatis setiap upload.
+    Jika dashboard menampilkan pesan "Tabel ... belum dibuat/terisi", jalankan
+    `php artisan migrate`, lalu `php artisan rollup:rebuild` (Receiving Goods) dan/atau
+    `php artisan scanout:rebuild` (Scan Out).
+  - Setelah mengubah master Row Location / Line (`php artisan db:seed --class=RowLocationSeeder`)
+    tabel fakta Scan Out dibangun ulang otomatis; pemetaan Line disimpan di tabel fakta.
   - Hasil dashboard juga di-cache (30 menit) dan otomatis dibuang saat ada upload.
-  - Catatan: "Jumlah Barcode" dihitung dari jumlah pasangan BSTHP + Label Barcode.
-    Jika label yang sama muncul di dua BSTHP berbeda, angkanya bisa lebih besar
-    sedikit (sekitar 0,005% pada data contoh) dibanding hitungan label unik murni.
+  - Jumlah Barcode Scan Out tetap dihitung eksak (COUNT DISTINCT pada hash). Catatan
+    Receiving Goods: "Jumlah Barcode" dihitung dari jumlah pasangan BSTHP + Label Barcode;
+    jika label yang sama muncul di dua BSTHP berbeda, angkanya bisa lebih besar sedikit
+    (sekitar 0,005% pada data contoh) dibanding hitungan label unik murni.
+  - Pencarian teks (`q`) pada dashboard Scan Out dicari sekali ke tabel scan_outs lalu
+    dipakai oleh semua agregasi; "Part Name" per Code Item dan NIK per PIC diambil dari
+    nilai MIN seluruh data (bukan hanya data hasil filter).
   - XAMPP: naikkan `innodb_buffer_pool_size=512M` di `xampp/mysql/bin/my.ini`
     (bawaan XAMPP sangat kecil) lalu restart MySQL; dan `max_execution_time=300`
     di `xampp/php/php.ini`.

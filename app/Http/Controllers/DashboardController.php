@@ -175,21 +175,31 @@ class DashboardController extends Controller
         // Daftar customer & PIC untuk dropdown filter (dari seluruh data, bukan hasil filter).
         // Di-cache singkat karena query ini tidak bergantung pada filter tapi tadinya
         // dijalankan ulang (full scan + join) di setiap request.
+        // Dibaca dari tabel ringkasan (kecil), bukan receiving_goods (SELECT DISTINCT + join
+        // pada 600rb+ baris butuh beberapa detik). Cache dibuang otomatis setiap ada import.
         $customerOptions = Cache::remember(
             'receiving_goods.customer_options.'.Cache::get('receiving_goods.data_version', '0'),
-            300,
-            fn () => ReceivingGood::query()
-                ->whereNotNull('customer')
-                ->leftJoin('customers', 'customers.name', '=', 'receiving_goods.customer')
-                ->select('receiving_goods.customer', 'customers.line as line')
-                ->distinct()
-                ->orderBy('receiving_goods.customer')
-                ->get()
+            now()->addMinutes(30),
+            function () {
+                $this->ensureRollupReady();
+
+                return DB::table('receiving_goods_rollup as r')
+                    ->whereNotNull('r.customer')
+                    ->leftJoin('customers', 'customers.name', '=', 'r.customer')
+                    ->select('r.customer', 'customers.line as line')
+                    ->distinct()
+                    ->orderBy('r.customer')
+                    ->get();
+            }
         );
         $picOptions = Cache::remember(
             'receiving_goods.pic_options.'.Cache::get('receiving_goods.data_version', '0'),
-            300,
-            fn () => ReceivingGood::whereNotNull('verify_by')->distinct()->orderBy('verify_by')->pluck('verify_by')
+            now()->addMinutes(30),
+            function () {
+                $this->ensureRollupReady();
+
+                return DB::table('receiving_goods_rollup')->whereNotNull('verify_by')->distinct()->orderBy('verify_by')->pluck('verify_by');
+            }
         );
         $lineOptions = Cache::remember(
             'receiving_goods.line_options',
@@ -213,7 +223,11 @@ class DashboardController extends Controller
                     ->orWhere('verify_by', 'like', "%{$keyword}%");
             });
         }
-        $rows = $tableQuery->paginate(25)->withQueryString();
+        // Tanpa pencarian teks, jumlah baris tabel = $totalRows (agregasi dengan filter yang sama),
+        // jadi COUNT(*) tambahan pada tabel besar bisa dilewati.
+        $rows = $request->filled('q')
+            ? $tableQuery->paginate(25)->withQueryString()
+            : $tableQuery->paginate(25, ['*'], 'page', null, $totalRows)->withQueryString();
 
         return view('dashboard', [
             'dateFrom' => $dateFrom,
